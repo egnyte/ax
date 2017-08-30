@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -36,9 +37,15 @@ func main() {
 
 	switch cmd {
 	case "query":
+		if client == nil {
+			fmt.Println("No env selected, and no default set. Exiting.")
+			return
+		}
 		queryMain(rc, client)
-	case "init":
-		config.InitSetup()
+	case "env add":
+		config.AddEnv()
+	case "env list":
+		config.ListEnvs()
 	}
 
 }
