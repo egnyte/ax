@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"syscall"
 
@@ -34,6 +34,7 @@ type RuntimeConfig struct {
 	ActiveEnv string
 	DataDir   string
 	Env       EnvMap
+	Config    Config
 }
 
 var (
@@ -41,6 +42,7 @@ var (
 	dockerFlag     = kingpin.Flag("docker", "Query docker container logs").HintAction(docker.DockerHintAction).String()
 	envCommand     = kingpin.Command("env", "Environment management commands")
 	envInitCommand = envCommand.Command("add", "Add an environment")
+	envEditCommand = envCommand.Command("edit", "Edit your environment configuration file in a text editor")
 	envListCommand = envCommand.Command("list", "List all environments").Default()
 )
 
@@ -73,6 +75,7 @@ func BuildConfig() RuntimeConfig {
 	rc := RuntimeConfig{
 		DataDir: dataDir,
 		Env:     make(EnvMap),
+		Config:  config,
 	}
 	var ok bool
 	if config.DefaultEnv != "" {
@@ -120,28 +123,56 @@ func b64Encode(s string) string {
 	return base64.StdEncoding.EncodeToString([]byte(s))
 }
 
-func kibanaConfig(reader *bufio.Reader) (EnvMap, error) {
+func findFirstEnvWhere(environments map[string]EnvMap, whereFunc func(EnvMap) bool) *EnvMap {
+	for _, m := range environments {
+		if whereFunc(m) {
+			return &m
+		}
+	}
+	return nil
+}
+
+func testKibana(em EnvMap) bool {
+	kibanaClient := kibana.New(em["url"], em["auth"], "")
+	_, err := kibanaClient.ListIndices()
+	return err != nil
+}
+
+func kibanaConfig(reader *bufio.Reader, existingConfig Config) (EnvMap, error) {
 	em := EnvMap{
 		"backend": "kibana",
 	}
-	fmt.Print("URL: ")
-	em["url"] = readLine(reader)
-	fmt.Println("Attempting to connect to Kibana on ", em["url"])
-	resp, err := http.Head(em["url"])
-	if err != nil {
-		fmt.Printf("Got error connecting to Kibana: %s\n", err)
-		return em, err
+	existingKibanaEnv := findFirstEnvWhere(existingConfig.Environments, func(em EnvMap) bool {
+		return em["backend"] == "kibana"
+	})
+	if existingKibanaEnv != nil {
+		defaultUrl := (*existingKibanaEnv)["url"]
+		fmt.Printf("URL [%s]: ", defaultUrl)
+		em["url"] = readLine(reader)
+		if em["url"] == "" {
+			em["auth"] = (*existingKibanaEnv)["auth"]
+			em["url"] = defaultUrl
+		}
+	} else {
+		fmt.Print("URL: ")
+		em["url"] = readLine(reader)
 	}
-	if resp.StatusCode == http.StatusUnauthorized {
-		user, pass := credentials(reader)
-		em["auth"] = fmt.Sprintf("Basic %s", b64Encode(fmt.Sprintf("%s:%s", user, pass)))
-		fmt.Println("Checking...")
-	}
-	kibanaClient := kibana.New(em["url"], em["auth"], "")
-	indices, err := kibanaClient.ListIndices()
-	if err != nil {
-		fmt.Println("Could not connect to Kibana to get list of indices successfullly")
-		return EnvMap{}, nil
+	var kibanaClient *kibana.Client
+	var indices []string
+	var err error
+	for {
+		fmt.Println("Attempting to connect to Kibana on ", em["url"])
+		kibanaClient = kibana.New(em["url"], em["auth"], "")
+		indices, err = kibanaClient.ListIndices()
+		if err != nil && err.Error() == "Authentication failed" {
+			user, pass := credentials(reader)
+			em["auth"] = fmt.Sprintf("Basic %s", b64Encode(fmt.Sprintf("%s:%s", user, pass)))
+			continue
+		} else if err != nil {
+			fmt.Printf("Got error connecting to Kibana: %s\n", err)
+			return em, err
+		}
+		break
 	}
 	fmt.Println("List of indices:")
 	for _, index := range indices {
@@ -172,15 +203,21 @@ func saveConfig(config Config) {
 func AddEnv() {
 	config := loadConfig()
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Name for new environment: ")
+	fmt.Print("Name for new environment [default]: ")
 	name := readLine(reader)
+	if name == "" {
+		name = "default"
+	}
 	fmt.Print("Choose a backend [kibana]: ")
 	backend := readLine(reader)
+	if backend == "" {
+		backend = "kibana"
+	}
 	var em EnvMap
 	var err error
 	switch backend {
 	case "kibana":
-		em, err = kibanaConfig(reader)
+		em, err = kibanaConfig(reader, config)
 		if err != nil {
 			return
 		}
@@ -207,6 +244,25 @@ func ListEnvs() {
 		table.Append([]string{def, k, v["backend"], v["index"]})
 	}
 	table.Render() // Send output
+}
+
+func EditConfig() {
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = "nano"
+	}
+	cmd := exec.Command(editor, configPathName())
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Start(); err != nil {
+		fmt.Println("Error starting editor", err)
+		return
+	}
+	if err := cmd.Wait(); err != nil {
+		fmt.Println("Error waiting for editor", err)
+		return
+	}
 }
 
 func init() {

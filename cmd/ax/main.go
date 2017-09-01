@@ -38,7 +38,13 @@ func main() {
 	switch cmd {
 	case "query":
 		if client == nil {
-			fmt.Println("No env selected, and no default set. Exiting.")
+			if len(rc.Config.Environments) == 0 {
+				// Assuming first time use
+				fmt.Println("Welcome to ax! It looks like this is the first time running, so let's start with creating a new environment.")
+				config.AddEnv()
+				return
+			}
+			fmt.Println("No default environment set, please use the --env flag to set one. Exiting.")
 			return
 		}
 		queryMain(rc, client)
@@ -46,6 +52,8 @@ func main() {
 		config.AddEnv()
 	case "env list":
 		config.ListEnvs()
+	case "env edit":
+		config.EditConfig()
 	}
 
 }

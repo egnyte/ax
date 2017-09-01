@@ -64,8 +64,10 @@ func (client *Client) ListIndices() ([]string, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode == http.StatusUnauthorized {
 		return nil, errors.New("Authentication failed")
+	} else if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.Status)
 	}
 	decoder := json.NewDecoder(resp.Body)
 	var data indexList
