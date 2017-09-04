@@ -33,7 +33,7 @@ func (client *DockerClient) Query(query common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 	runningCommands := 0
 	for _, containerName := range GetRunningContainers(client.containerPattern) {
-		command := []string{"docker", "logs"}
+		command := []string{"docker", "logs", "--tail", fmt.Sprintf("%d", query.MaxResults)}
 		if query.Follow {
 			command = append(command, "-f")
 		}
@@ -42,7 +42,7 @@ func (client *DockerClient) Query(query common.Query) <-chan common.LogMessage {
 		runningCommands++
 		go func() {
 			for message := range client.Query(query) {
-				message.Attributes["docker_container"] = containerName
+				message.Attributes["@container"] = containerName
 				resultChan <- message
 			}
 			runningCommands--

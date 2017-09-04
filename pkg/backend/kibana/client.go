@@ -28,7 +28,6 @@ func (client *Client) addHeaders(req *http.Request) {
 	// TODO: This may seem crazy but this header needs to be set, even if empty
 	req.Header.Set("Kbn-Version", "")
 	req.Header.Set("Content-Type", "application/x-ldjson")
-	req.Header.Set("Accept", "application/json, text/plain, */*")
 }
 
 type indexList struct {

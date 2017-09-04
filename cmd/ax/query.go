@@ -71,7 +71,7 @@ func queryMain(rc config.RuntimeConfig, client common.Client) {
 			fmt.Println("Could parse after date:", *queryAfter)
 			os.Exit(1)
 		}
-		fmt.Fprintf(os.Stderr, "Parsed --after as %s", afterTime.Format(time.RFC3339))
+		fmt.Fprintf(os.Stderr, "Parsed --after as %s", afterTime.Format(common.TimeFormat))
 		after = &afterTime
 	}
 	if *queryBefore != "" {
@@ -81,7 +81,7 @@ func queryMain(rc config.RuntimeConfig, client common.Client) {
 			fmt.Println("Could parse before date:", *queryBefore)
 			os.Exit(1)
 		}
-		fmt.Fprintf(os.Stderr, "Parsed --before as %s", beforeTime.Format(time.RFC3339))
+		fmt.Fprintf(os.Stderr, "Parsed --before as %s", beforeTime.Format(common.TimeFormat))
 		before = &beforeTime
 	}
 
@@ -102,31 +102,34 @@ func queryMain(rc config.RuntimeConfig, client common.Client) {
 func printMessage(message common.LogMessage, queryOutputFormat string) {
 	switch queryOutputFormat {
 	case "text":
-		ts := message.Timestamp.Format(time.RFC3339)
+		ts := message.Timestamp.Format(common.TimeFormat)
 		fmt.Printf("[%s] ", color.MagentaString(ts))
-		if message.Message != "" {
+		if msg, ok := message.Attributes["message"].(string); ok {
 			messageColor := color.New(color.Bold)
-			fmt.Printf("%s ", messageColor.Sprint(message.Message))
+			fmt.Printf("%s ", messageColor.Sprint(msg))
 		}
 		for key, value := range message.Attributes {
+			if key == "message" {
+				continue
+			}
 			fmt.Printf("%s=%s ", color.CyanString(key), common.MustJsonEncode(value))
 		}
 		fmt.Println()
 	case "json":
 		encoder := json.NewEncoder(os.Stdout)
-		err := encoder.Encode(message)
+		err := encoder.Encode(message.Map())
 		if err != nil {
 			fmt.Println("Error JSON encoding")
 		}
-	case "json-pretty":
+	case "pretty-json":
 		encoder := json.NewEncoder(os.Stdout)
 		encoder.SetIndent("", "  ")
-		err := encoder.Encode(message)
+		err := encoder.Encode(message.Map())
 		if err != nil {
 			fmt.Println("Error JSON encoding")
 		}
 	case "yaml":
-		buf, err := yaml.Marshal(message)
+		buf, err := yaml.Marshal(message.Map())
 		if err != nil {
 			fmt.Println("Error YAML encoding")
 		}

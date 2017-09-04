@@ -13,7 +13,7 @@ import (
 
 	"golang.org/x/crypto/ssh/terminal"
 
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"github.com/zefhemel/kingpin"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/olekukonko/tablewriter"
@@ -38,7 +38,7 @@ type RuntimeConfig struct {
 }
 
 var (
-	activeEnv      = kingpin.Flag("env", "Environment to connect to").Short('e').String()
+	activeEnv      = kingpin.Flag("env", "Environment to connect to").Short('e').HintAction(envHintAction).String()
 	dockerFlag     = kingpin.Flag("docker", "Query docker container logs").HintAction(docker.DockerHintAction).String()
 	envCommand     = kingpin.Command("env", "Environment management commands")
 	envInitCommand = envCommand.Command("add", "Add an environment")
@@ -232,6 +232,14 @@ func AddEnv() {
 	saveConfig(config)
 }
 
+func envHintAction() []string {
+	config := loadConfig()
+	results := make([]string, 0, len(config.Environments))
+	for k, _ := range config.Environments {
+		results = append(results, k)
+	}
+	return results
+}
 func ListEnvs() {
 	config := loadConfig()
 	table := tablewriter.NewWriter(os.Stdout)

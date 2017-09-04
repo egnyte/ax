@@ -26,16 +26,13 @@ func parseLine(line string) common.LogMessage {
 	obj := make(map[string]interface{})
 	err := decoder.Decode(&obj)
 	if err != nil {
+		obj["message"] = strings.TrimSpace(line)
 		return common.LogMessage{
-			Message:    strings.TrimSpace(line),
 			Timestamp:  time.Now(),
 			Attributes: obj,
 		}
 	}
-	message, _ := obj["message"].(string)
-	delete(obj, "message")
 	return common.LogMessage{
-		Message:    message,
 		Timestamp:  time.Now(), // TODO: Fix this
 		Attributes: obj,
 	}

@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var TimeFormat = time.RFC3339
+
 type Client interface {
 	Query(query Query) <-chan LogMessage
 }
@@ -29,9 +31,22 @@ type Query struct {
 }
 
 type LogMessage struct {
-	Timestamp  time.Time
-	Message    string
-	Attributes map[string]interface{}
+	ID         string                 `json:"id,omitempty"`
+	Timestamp  time.Time              `json:"@timestamp"`
+	Attributes map[string]interface{} `json:"attributes"`
+}
+
+// Performs a shallow copy of the Attributes map and adds fields for '@id' and '@timestamp'
+func (lm LogMessage) Map() map[string]interface{} {
+	out := make(map[string]interface{})
+	for k, v := range lm.Attributes {
+		out[k] = v
+	}
+	if lm.ID != "" {
+		out["@id"] = lm.ID
+	}
+	out["@timestamp"] = lm.Timestamp.Format(TimeFormat)
+	return out
 }
 
 func NewLogMessage() LogMessage {
@@ -69,8 +84,8 @@ func FlattenAttributes(m, into map[string]interface{}, prefix string) {
 
 func FlattenLogMessage(message LogMessage) LogMessage {
 	newMessage := NewLogMessage()
+	newMessage.ID = message.ID
 	newMessage.Timestamp = message.Timestamp
-	newMessage.Message = message.Message
 	FlattenAttributes(message.Attributes, newMessage.Attributes, "")
 	return newMessage
 }
@@ -98,7 +113,8 @@ func matchesPhrase(s, phrase string) bool {
 }
 
 func MatchesQuery(m LogMessage, q Query) bool {
-	matchFound := matchesPhrase(m.Message, q.QueryString)
+	msg, _ := m.Attributes["message"].(string)
+	matchFound := matchesPhrase(msg, q.QueryString)
 	if q.QueryString != "" {
 		for _, v := range m.Attributes {
 			if vs, ok := v.(string); ok {

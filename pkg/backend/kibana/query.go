@@ -204,12 +204,10 @@ func (client *Client) querySubIndex(subIndex string, q common.Query) ([]common.L
 		if err != nil {
 			return nil, err
 		}
-		message, _ := attributes["message"].(string)
-		delete(attributes, "message")
 		delete(attributes, "@timestamp")
 		allMessages = append(allMessages, common.FlattenLogMessage(common.LogMessage{
+			ID:         hit.ID,
 			Timestamp:  ts,
-			Message:    message,
 			Attributes: attributes,
 		}))
 	}

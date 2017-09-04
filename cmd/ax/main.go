@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"github.com/zefhemel/kingpin"
 
 	"github.com/zefhemel/ax/pkg/backend/common"
 	"github.com/zefhemel/ax/pkg/backend/docker"
