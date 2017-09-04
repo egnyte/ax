@@ -8,8 +8,8 @@ import (
 func TestFilter(t *testing.T) {
 	lm := LogMessage{
 		Timestamp: time.Now(),
-		Message:   "Sup",
 		Attributes: map[string]interface{}{
+			"message": "Sup",
 			"someStr": "Zef",
 			"someN":   34,
 		},

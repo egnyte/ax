@@ -10,8 +10,8 @@ import (
 	"github.com/araddon/dateparse"
 	"github.com/fatih/color"
 	"github.com/zefhemel/ax/pkg/backend/common"
-	"github.com/zefhemel/ax/pkg/complete"
 	"github.com/zefhemel/ax/pkg/config"
+	"github.com/zefhemel/ax/pkg/heuristic"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -30,7 +30,7 @@ var (
 func whereHintAction() []string {
 	rc := config.BuildConfig()
 	resultList := make([]string, 0, 20)
-	for attrName, _ := range complete.GetCompletions(rc) {
+	for attrName, _ := range heuristic.GetCompletions(rc) {
 		resultList = append(resultList, fmt.Sprintf("%s=", attrName))
 	}
 	return resultList
@@ -39,7 +39,7 @@ func whereHintAction() []string {
 func selectHintAction() []string {
 	rc := config.BuildConfig()
 	resultList := make([]string, 0, 20)
-	for attrName, _ := range complete.GetCompletions(rc) {
+	for attrName, _ := range heuristic.GetCompletions(rc) {
 		resultList = append(resultList, attrName)
 	}
 	return resultList
@@ -85,7 +85,7 @@ func queryMain(rc config.RuntimeConfig, client common.Client) {
 		before = &beforeTime
 	}
 
-	for message := range complete.GatherCompletionInfo(rc, client.Query(common.Query{
+	for message := range heuristic.GatherCompletionInfo(rc, client.Query(common.Query{
 		QueryString:  strings.Join(*queryString, " "),
 		Before:       before,
 		After:        after,
