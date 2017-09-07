@@ -35,7 +35,7 @@ For zsh, add to `~/.zshrc`:
 
     eval "$(ax --completion-script-zsh)"
 
-After this, you can auto complete commands, flags, environments and even attribute names  with TAB. Use it, love it.
+After this, you can auto complete commands, flags, environments, docker container names and even attribute names by hittig TAB. Use it, love it, never go back.
 
 ## Setup with Kibana
 To setup Ax for use with Kibana, run:
