@@ -16,6 +16,7 @@ type Client interface {
 
 type QueryFilter struct {
 	FieldName string
+	Operator  string
 	Value     string
 }
 
@@ -126,7 +127,14 @@ func Project(m map[string]interface{}, fields []string) map[string]interface{} {
 
 func (f QueryFilter) Matches(m LogMessage) bool {
 	val, ok := m.Attributes[f.FieldName]
-	return ok && f.Value == fmt.Sprintf("%v", val)
+	switch f.Operator {
+	case "=":
+		return ok && f.Value == fmt.Sprintf("%v", val)
+	case "!=":
+		return !ok || (ok && f.Value != fmt.Sprintf("%v", val))
+	default:
+		panic("Not supported operator")
+	}
 }
 
 func matchesPhrase(s, phrase string) bool {

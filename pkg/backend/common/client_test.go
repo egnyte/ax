@@ -16,64 +16,67 @@ func TestFilter(t *testing.T) {
 	}
 	lastHour := time.Now().Add(-time.Hour)
 	nextHour := time.Now().Add(time.Hour)
-	shouldMatchQuery := Query{
-		Filters: []QueryFilter{
-			QueryFilter{FieldName: "someStr", Value: "Zef"},
+	shouldMatchQueries := []Query{
+		Query{
+			Filters: []QueryFilter{
+				QueryFilter{FieldName: "someStr", Value: "Zef", Operator: "="},
+			},
+		},
+		Query{
+			Filters: []QueryFilter{
+				QueryFilter{FieldName: "someN", Value: "34", Operator: "="},
+			},
+		},
+		Query{
+			QueryString: "zef",
+			Filters: []QueryFilter{
+				QueryFilter{FieldName: "someN", Value: "34", Operator: "="},
+			},
+		},
+		Query{
+			QueryString: "zef",
+			Filters: []QueryFilter{
+				QueryFilter{FieldName: "someN", Value: "34", Operator: "="},
+			},
+			Before: &nextHour,
+			After:  &lastHour,
+		},
+		Query{
+			Filters: []QueryFilter{
+				QueryFilter{FieldName: "someN", Value: "32", Operator: "!="},
+			},
+		},
+		Query{
+			Filters: []QueryFilter{
+				QueryFilter{FieldName: "someNonexistingField", Value: "Pete", Operator: "!="},
+			},
 		},
 	}
-	shouldMatchQuery2 := Query{
-		Filters: []QueryFilter{
-			QueryFilter{FieldName: "someN", Value: "34"},
+	shouldNotMatchQueries := []Query{
+		Query{
+			Filters: []QueryFilter{
+				QueryFilter{FieldName: "someStr", Value: "Pete", Operator: "="},
+			},
+		},
+		Query{
+			QueryString: "bla",
+			Filters: []QueryFilter{
+				QueryFilter{FieldName: "someStr", Value: "Pete", Operator: "="},
+			},
+		},
+		Query{
+			After: &nextHour,
 		},
 	}
-	shouldMatchQuery3 := Query{
-		QueryString: "zef",
-		Filters: []QueryFilter{
-			QueryFilter{FieldName: "someN", Value: "34"},
-		},
+	for i, shouldMatch := range shouldMatchQueries {
+		if !MatchesQuery(lm, shouldMatch) {
+			t.Errorf("Did not match: %d: %+v", i, shouldMatch)
+		}
 	}
-	shouldMatchQuery4 := Query{
-		QueryString: "zef",
-		Filters: []QueryFilter{
-			QueryFilter{FieldName: "someN", Value: "34"},
-		},
-		Before: &nextHour,
-		After:  &lastHour,
-	}
-	shouldNotMatchQuery := Query{
-		Filters: []QueryFilter{
-			QueryFilter{FieldName: "someStr", Value: "Pete"},
-		},
-	}
-	shouldNotMatchQuery2 := Query{
-		QueryString: "bla",
-		Filters: []QueryFilter{
-			QueryFilter{FieldName: "someStr", Value: "Pete"},
-		},
-	}
-	shouldNotMatchQuery3 := Query{
-		After: &nextHour,
-	}
-	if !MatchesQuery(lm, shouldMatchQuery) {
-		t.Errorf("Did not match")
-	}
-	if !MatchesQuery(lm, shouldMatchQuery2) {
-		t.Errorf("Did not match 2")
-	}
-	if !MatchesQuery(lm, shouldMatchQuery3) {
-		t.Errorf("Did not match 3")
-	}
-	if !MatchesQuery(lm, shouldMatchQuery4) {
-		t.Errorf("Did not match 4")
-	}
-	if MatchesQuery(lm, shouldNotMatchQuery) {
-		t.Errorf("Did match")
-	}
-	if MatchesQuery(lm, shouldNotMatchQuery2) {
-		t.Errorf("Did match 2")
-	}
-	if MatchesQuery(lm, shouldNotMatchQuery3) {
-		t.Errorf("Did match 3")
+	for i, shouldNotMatch := range shouldNotMatchQueries {
+		if MatchesQuery(lm, shouldNotMatch) {
+			t.Errorf("Did match: %d: %+v", i, shouldNotMatch)
+		}
 	}
 }
 

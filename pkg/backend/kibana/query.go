@@ -42,7 +42,7 @@ func (client *Client) queryMessages(subIndex string, query common.Query) ([]Hit,
 	if query.QueryString == "" {
 		queryString = "*"
 	}
-	filterList := JsonList{
+	mustFilters := JsonList{
 		JsonObject{
 			"query_string": JsonObject{
 				"analyze_wildcard": true,
@@ -65,17 +65,29 @@ func (client *Client) queryMessages(subIndex string, query common.Query) ([]Hit,
 		if query.Before != nil {
 			rangeObj["range"].(JsonObject)["@timestamp"].(JsonObject)["lt"] = unixMillis(*query.Before)
 		}
-		filterList = append(filterList, rangeObj)
+		mustFilters = append(mustFilters, rangeObj)
 	}
+	mustNotFilters := JsonList{}
 	for _, filter := range query.Filters {
 		m := JsonObject{}
-		m[filter.FieldName] = JsonObject{
-			"query": filter.Value,
-			"type":  "phrase",
+		switch filter.Operator {
+		case "=":
+			m[filter.FieldName] = JsonObject{
+				"query": filter.Value,
+				"type":  "phrase",
+			}
+			mustFilters = append(mustFilters, JsonObject{
+				"match": m,
+			})
+		case "!=":
+			m[filter.FieldName] = JsonObject{
+				"query": filter.Value,
+				"type":  "phrase",
+			}
+			mustNotFilters = append(mustNotFilters, JsonObject{
+				"match": m,
+			})
 		}
-		filterList = append(filterList, JsonObject{
-			"match": m,
-		})
 	}
 	body, err := createMultiSearch(
 		JsonObject{
@@ -94,7 +106,8 @@ func (client *Client) queryMessages(subIndex string, query common.Query) ([]Hit,
 			},
 			"query": JsonObject{
 				"bool": JsonObject{
-					"must": filterList,
+					"must":     mustFilters,
+					"must_not": mustNotFilters,
 				},
 			},
 		})
@@ -197,19 +210,20 @@ func (client *Client) querySubIndex(subIndex string, q common.Query) ([]common.L
 
 	allMessages := make([]common.LogMessage, 0, 200)
 	for _, hit := range hits {
-		var attributes map[string]interface{}
-		var ts time.Time
-		attributes = common.Project(hit.Source, q.SelectFields)
-		ts, err = time.Parse(time.RFC3339, hit.Source["@timestamp"].(string))
+		//var ts time.Time
+		attributes := hit.Source
+		ts, err := time.Parse(time.RFC3339, attributes["@timestamp"].(string))
 		if err != nil {
 			return nil, err
 		}
 		delete(attributes, "@timestamp")
-		allMessages = append(allMessages, common.FlattenLogMessage(common.LogMessage{
+		message := common.FlattenLogMessage(common.LogMessage{
 			ID:         hit.ID,
 			Timestamp:  ts,
 			Attributes: attributes,
-		}))
+		})
+		message.Attributes = common.Project(message.Attributes, q.SelectFields)
+		allMessages = append(allMessages, message)
 	}
 	return allMessages, nil
 }

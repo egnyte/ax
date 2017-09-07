@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -57,17 +58,21 @@ func selectHintAction() []string {
 	return resultList
 }
 
+var filterRegex = regexp.MustCompile(`([^!=<>]+)\s*(=|!=)\s*(.*)`)
+
 func buildFilters(wheres []string) []common.QueryFilter {
 	filters := make([]common.QueryFilter, 0, len(wheres))
 	for _, whereClause := range wheres {
-		pieces := strings.SplitN(whereClause, "=", 2)
-		if len(pieces) != 2 {
+		//pieces := strings.SplitN(whereClause, "=", 2)
+		matches := filterRegex.FindAllStringSubmatch(whereClause, -1)
+		if len(matches) != 1 {
 			fmt.Println("Invalid where clause", whereClause)
 			os.Exit(1)
 		}
 		filters = append(filters, common.QueryFilter{
-			FieldName: pieces[0],
-			Value:     pieces[1],
+			FieldName: matches[0][1],
+			Operator:  matches[0][2],
+			Value:     matches[0][3],
 		})
 	}
 	return filters
@@ -126,10 +131,10 @@ func printMessage(message common.LogMessage, queryOutputFormat string) {
 			fmt.Printf("%s ", messageColor.Sprint(msg))
 		}
 		for key, value := range message.Attributes {
-			if key == "message" {
+			if key == "message" || value == nil {
 				continue
 			}
-			fmt.Printf("%s=%s ", color.CyanString(key), common.MustJsonEncode(value))
+			fmt.Printf("%s=%+v ", color.CyanString(key), value)
 		}
 		fmt.Println()
 	case "json":
