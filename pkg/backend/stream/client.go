@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/zefhemel/ax/pkg/backend/common"
+	"github.com/zefhemel/ax/pkg/heuristic"
 )
 
 type Client struct {
@@ -42,9 +43,11 @@ func (client *Client) Query(q common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 	reader := bufio.NewReader(client.reader)
 	go func() {
+		var ltFunc heuristic.LogTimestampParser
 		for {
 			line, err := reader.ReadString('\n')
 			if err != nil {
+				// TODO: erro != EOF break?
 				if err == io.EOF {
 					break
 				}
@@ -52,6 +55,21 @@ func (client *Client) Query(q common.Query) <-chan common.LogMessage {
 				break
 			}
 			message := parseLine(line)
+			if ltFunc == nil {
+				ltFunc = heuristic.FindTimestampFunc(message)
+			}
+			if ltFunc != nil {
+				ts := ltFunc(message)
+				if ts != nil {
+					message.Timestamp = *ts
+				} else {
+					ltFunc = heuristic.FindTimestampFunc(message)
+					if ltFunc != nil {
+						ts := ltFunc(message)
+						message.Timestamp = *ts
+					}
+				}
+			}
 			if common.MatchesQuery(message, q) {
 				message.Attributes = common.Project(message.Attributes, q.SelectFields)
 				resultChan <- message

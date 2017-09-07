@@ -17,6 +17,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/zefhemel/ax/pkg/backend/common"
 	"github.com/zefhemel/ax/pkg/backend/docker"
 	"github.com/zefhemel/ax/pkg/backend/kibana"
 )
@@ -28,7 +29,17 @@ type EnvMap map[string]string
 type Config struct {
 	DefaultEnv   string            `yaml:"default"`
 	Environments map[string]EnvMap `yaml:"env"`
+	Alerts       []AlertConfig     `yaml:"alerts"`
 }
+
+type AlertConfig struct {
+	Env      string                `yaml:"env"`
+	Name     string                `yaml:"name"`
+	Selector common.QuerySelectors `yaml:"selector"`
+	Service  AlertServiceConfig    `yaml:"service"`
+}
+
+type AlertServiceConfig map[string]string
 
 type RuntimeConfig struct {
 	ActiveEnv string
@@ -49,10 +60,11 @@ var (
 func NewConfig() Config {
 	return Config{
 		Environments: make(map[string]EnvMap),
+		Alerts:       make([]AlertConfig, 0),
 	}
 }
 
-func loadConfig() Config {
+func LoadConfig() Config {
 	config := NewConfig()
 	buf, err := ioutil.ReadFile(configPathName())
 	if err != nil {
@@ -63,6 +75,12 @@ func loadConfig() Config {
 		fmt.Fprintf(os.Stderr, "Could not unmarshall config: %s", err)
 		return config
 	}
+	if config.Environments == nil {
+		config.Environments = make(map[string]EnvMap)
+	}
+	if config.Alerts == nil {
+		config.Alerts = make([]AlertConfig, 0)
+	}
 	return config
 }
 
@@ -71,7 +89,7 @@ func configPathName() string {
 }
 
 func BuildConfig() RuntimeConfig {
-	config := loadConfig()
+	config := LoadConfig()
 	rc := RuntimeConfig{
 		DataDir: dataDir,
 		Env:     make(EnvMap),
@@ -183,7 +201,7 @@ func kibanaConfig(reader *bufio.Reader, existingConfig Config) (EnvMap, error) {
 	return em, nil
 }
 
-func saveConfig(config Config) {
+func SaveConfig(config Config) {
 	f, err := os.Create(fmt.Sprintf("%s/ax.yaml", dataDir))
 	if err != nil {
 		fmt.Println("Couldn't open ax.yaml for writing", err)
@@ -201,7 +219,7 @@ func saveConfig(config Config) {
 }
 
 func AddEnv() {
-	config := loadConfig()
+	config := LoadConfig()
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Name for new environment [default]: ")
 	name := readLine(reader)
@@ -229,11 +247,11 @@ func AddEnv() {
 		config.DefaultEnv = name
 	}
 	config.Environments[name] = em
-	saveConfig(config)
+	SaveConfig(config)
 }
 
 func envHintAction() []string {
-	config := loadConfig()
+	config := LoadConfig()
 	results := make([]string, 0, len(config.Environments))
 	for k, _ := range config.Environments {
 		results = append(results, k)
@@ -241,7 +259,7 @@ func envHintAction() []string {
 	return results
 }
 func ListEnvs() {
-	config := loadConfig()
+	config := LoadConfig()
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"D", "Name", "Backend", "Index"})
 	for k, v := range config.Environments {

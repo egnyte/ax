@@ -1,6 +1,7 @@
 package common
 
 import (
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -30,6 +31,14 @@ type Query struct {
 	Follow bool
 }
 
+type QuerySelectors struct {
+	Before      string   `yaml:"before,omitempty"`
+	After       string   `yaml:"after,omitempty"`
+	Select      []string `yaml:"select,omitempty"`
+	Where       []string `yaml:"where,omitempty"`
+	QueryString []string `yaml:"query,omitempty"`
+}
+
 type LogMessage struct {
 	ID         string                 `json:"id,omitempty"`
 	Timestamp  time.Time              `json:"@timestamp"`
@@ -47,6 +56,18 @@ func (lm LogMessage) Map() map[string]interface{} {
 	}
 	out["@timestamp"] = lm.Timestamp.Format(TimeFormat)
 	return out
+}
+
+func (lm LogMessage) UniqueID() string {
+	if lm.ID != "" {
+		return lm.ID
+	}
+	// Didn't get a unique ID from our source, let's just SHA1 the message itself
+	m := lm.Map()
+	h := sha1.New()
+	encoder := json.NewEncoder(h)
+	encoder.Encode(&m)
+	return fmt.Sprintf("%x", h.Sum(nil))[0:10]
 }
 
 func NewLogMessage() LogMessage {

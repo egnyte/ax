@@ -10,27 +10,39 @@ import (
 	"github.com/araddon/dateparse"
 	"github.com/fatih/color"
 	"github.com/zefhemel/ax/pkg/backend/common"
+	"github.com/zefhemel/ax/pkg/complete"
 	"github.com/zefhemel/ax/pkg/config"
-	"github.com/zefhemel/ax/pkg/heuristic"
+	"github.com/zefhemel/kingpin"
 	yaml "gopkg.in/yaml.v2"
 )
 
+func addQueryFlags(cmd *kingpin.CmdClause) *common.QuerySelectors {
+	flags := &common.QuerySelectors{}
+	cmd.Flag("before", "Results from before").StringVar(&flags.Before)
+	cmd.Flag("after", "Results from after").StringVar(&flags.After)
+	cmd.Flag("select", "Fields to select").Short('s').HintAction(selectHintAction).StringsVar(&flags.Select)
+	cmd.Flag("where", "Add a filter").Short('w').HintAction(whereHintAction).StringsVar(&flags.Where)
+	cmd.Arg("query", "Query string").Default("").StringsVar(&flags.QueryString)
+	return flags
+}
+
 var (
-	queryBefore     = queryCommand.Flag("before", "Results from before").String()
-	queryAfter      = queryCommand.Flag("after", "Results from after").String()
-	queryMaxResults = queryCommand.Flag("results", "Maximum number of results").Short('n').Default("200").Int()
-	querySelect     = queryCommand.Flag("select", "Fields to select").Short('s').HintAction(selectHintAction).Strings()
-	queryWhere      = queryCommand.Flag("where", "Add a filter").Short('w').HintAction(whereHintAction).Strings()
-	//querySortDesc     = queryCommand.Flag("desc", "Sort results reverse-chronologically").Default("false").Bool()
-	queryOutputFormat = queryCommand.Flag("output", "Output format: text|json|yaml").Short('o').Default("text").Enum("text", "yaml", "json", "pretty-json")
-	queryFollow       = queryCommand.Flag("follow", "Follow log in quasi-realtime, similar to tail -f").Short('f').Default("false").Bool()
-	queryString       = queryCommand.Arg("query", "Query string").Default("").Strings()
+	queryFlags            = addQueryFlags(queryCommand)
+	queryFlagMaxResults   int
+	queryFlagOutputFormat string
+	queryFlagFollow       bool
 )
+
+func init() {
+	queryCommand.Flag("results", "Maximum number of results").Short('n').Default("200").IntVar(&queryFlagMaxResults)
+	queryCommand.Flag("output", "Output format: text|json|yaml").Short('o').Default("text").EnumVar(&queryFlagOutputFormat, "text", "yaml", "json", "pretty-json")
+	queryCommand.Flag("follow", "Follow log in quasi-realtime, similar to tail -f").Short('f').Default("false").BoolVar(&queryFlagFollow)
+}
 
 func whereHintAction() []string {
 	rc := config.BuildConfig()
 	resultList := make([]string, 0, 20)
-	for attrName, _ := range heuristic.GetCompletions(rc) {
+	for attrName, _ := range complete.GetCompletions(rc) {
 		resultList = append(resultList, fmt.Sprintf("%s=", attrName))
 	}
 	return resultList
@@ -39,7 +51,7 @@ func whereHintAction() []string {
 func selectHintAction() []string {
 	rc := config.BuildConfig()
 	resultList := make([]string, 0, 20)
-	for attrName, _ := range heuristic.GetCompletions(rc) {
+	for attrName, _ := range complete.GetCompletions(rc) {
 		resultList = append(resultList, attrName)
 	}
 	return resultList
@@ -61,40 +73,45 @@ func buildFilters(wheres []string) []common.QueryFilter {
 	return filters
 }
 
-func queryMain(rc config.RuntimeConfig, client common.Client) {
+func querySelectorsToQuery(flags *common.QuerySelectors) common.Query {
 	var before *time.Time
 	var after *time.Time
-	if *queryAfter != "" {
+	if flags.After != "" {
 		var err error
-		afterTime, err := dateparse.ParseLocal(*queryAfter)
+		afterTime, err := dateparse.ParseLocal(flags.After)
 		if err != nil {
-			fmt.Println("Could parse after date:", *queryAfter)
+			fmt.Println("Could parse after date:", flags.After)
 			os.Exit(1)
 		}
 		fmt.Fprintf(os.Stderr, "Parsed --after as %s", afterTime.Format(common.TimeFormat))
 		after = &afterTime
 	}
-	if *queryBefore != "" {
+	if flags.Before != "" {
 		var err error
-		beforeTime, err := dateparse.ParseLocal(*queryBefore)
+		beforeTime, err := dateparse.ParseLocal(flags.Before)
 		if err != nil {
-			fmt.Println("Could parse before date:", *queryBefore)
+			fmt.Println("Could parse before date:", flags.Before)
 			os.Exit(1)
 		}
 		fmt.Fprintf(os.Stderr, "Parsed --before as %s", beforeTime.Format(common.TimeFormat))
 		before = &beforeTime
 	}
 
-	for message := range heuristic.GatherCompletionInfo(rc, client.Query(common.Query{
-		QueryString:  strings.Join(*queryString, " "),
+	return common.Query{
+		QueryString:  strings.Join(flags.QueryString, " "),
 		Before:       before,
 		After:        after,
-		Filters:      buildFilters(*queryWhere),
-		MaxResults:   *queryMaxResults,
-		SelectFields: *querySelect,
-		Follow:       *queryFollow,
-	})) {
-		printMessage(message, *queryOutputFormat)
+		Filters:      buildFilters(flags.Where),
+		SelectFields: flags.Select,
+	}
+}
+
+func queryMain(rc config.RuntimeConfig, client common.Client) {
+	query := querySelectorsToQuery(queryFlags)
+	query.MaxResults = queryFlagMaxResults
+	query.Follow = queryFlagFollow
+	for message := range complete.GatherCompletionInfo(rc, client.Query(query)) {
+		printMessage(message, queryFlagOutputFormat)
 	}
 
 }

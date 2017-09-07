@@ -1,4 +1,4 @@
-package heuristic
+package complete
 
 import (
 	"fmt"
