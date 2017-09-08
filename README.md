@@ -6,7 +6,7 @@ For now there's no pre-built binaries, so to run this you need a reasonably rece
 
 To install dependencies:
 
-    make dep
+    make deps
 
 To run tests:
 
