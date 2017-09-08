@@ -5,14 +5,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/zefhemel/kingpin"
+	"github.com/egnyte/kingpin"
 
-	"github.com/zefhemel/ax/pkg/backend/common"
-	"github.com/zefhemel/ax/pkg/backend/docker"
-	"github.com/zefhemel/ax/pkg/backend/kibana"
-	"github.com/zefhemel/ax/pkg/backend/stream"
-	"github.com/zefhemel/ax/pkg/backend/subprocess"
-	"github.com/zefhemel/ax/pkg/config"
+	"github.com/egnyte/ax/pkg/backend/common"
+	"github.com/egnyte/ax/pkg/backend/docker"
+	"github.com/egnyte/ax/pkg/backend/kibana"
+	"github.com/egnyte/ax/pkg/backend/stream"
+	"github.com/egnyte/ax/pkg/backend/subprocess"
+	"github.com/egnyte/ax/pkg/config"
 )
 
 var (

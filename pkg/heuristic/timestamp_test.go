@@ -3,7 +3,7 @@ package heuristic
 import (
 	"testing"
 
-	"github.com/zefhemel/ax/pkg/backend/common"
+	"github.com/egnyte/ax/pkg/backend/common"
 )
 
 func TestParseTimestampUnix(t *testing.T) {

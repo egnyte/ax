@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zefhemel/ax/pkg/alert"
-	"github.com/zefhemel/ax/pkg/alert/slack"
-	"github.com/zefhemel/ax/pkg/backend/common"
-	"github.com/zefhemel/ax/pkg/cache"
-	"github.com/zefhemel/ax/pkg/config"
+	"github.com/egnyte/ax/pkg/alert"
+	"github.com/egnyte/ax/pkg/alert/slack"
+	"github.com/egnyte/ax/pkg/backend/common"
+	"github.com/egnyte/ax/pkg/cache"
+	"github.com/egnyte/ax/pkg/config"
 )
 
 var (

@@ -2,7 +2,7 @@
 It's a structured logging world we live in, but do we really have to look at JSON? Not with Ax.
 
 ## Installation
-For now there's no pre-built binaries, so to run this you need a reasonably recent version of Go. Then either git clone this project in `$GOPATH/src/github.com/zefhemel/ax` or run `go get -u github.com/zefhemel/ax`.
+For now there's no pre-built binaries, so to run this you need a reasonably recent version of Go. Then either git clone this project in `$GOPATH/src/github.com/egnyte/ax` or run `go get -u github.com/egnyte/ax`.
 
 To install dependencies:
 
@@ -19,7 +19,7 @@ To "go install" ax (this will put the resulting binary in `$GOPATH/bin` so put t
 
 ## Upgrade
 
-In `$GOPATH/src/github.com/zefhemel/ax`:
+In `$GOPATH/src/github.com/egnyte/ax`:
 
     git pull
     make

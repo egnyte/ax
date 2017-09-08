@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/zefhemel/ax/pkg/backend/common"
+	"github.com/egnyte/ax/pkg/backend/common"
 )
 
 type Client struct {

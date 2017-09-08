@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zefhemel/ax/pkg/backend/common"
+	"github.com/egnyte/ax/pkg/backend/common"
 )
 
 func TestFindTimestamp(t *testing.T) {

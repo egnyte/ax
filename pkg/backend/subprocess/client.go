@@ -3,8 +3,8 @@ package subprocess
 import (
 	"os/exec"
 
-	"github.com/zefhemel/ax/pkg/backend/common"
-	"github.com/zefhemel/ax/pkg/backend/stream"
+	"github.com/egnyte/ax/pkg/backend/common"
+	"github.com/egnyte/ax/pkg/backend/stream"
 )
 
 type SubprocessClient struct {

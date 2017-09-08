@@ -10,8 +10,8 @@ import (
 
 	"time"
 
-	"github.com/zefhemel/ax/pkg/backend/common"
-	"github.com/zefhemel/ax/pkg/heuristic"
+	"github.com/egnyte/ax/pkg/backend/common"
+	"github.com/egnyte/ax/pkg/heuristic"
 )
 
 type Client struct {

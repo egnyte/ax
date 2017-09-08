@@ -10,10 +10,10 @@ import (
 
 	"github.com/araddon/dateparse"
 	"github.com/fatih/color"
-	"github.com/zefhemel/ax/pkg/backend/common"
-	"github.com/zefhemel/ax/pkg/complete"
-	"github.com/zefhemel/ax/pkg/config"
-	"github.com/zefhemel/kingpin"
+	"github.com/egnyte/ax/pkg/backend/common"
+	"github.com/egnyte/ax/pkg/complete"
+	"github.com/egnyte/ax/pkg/config"
+	"github.com/egnyte/kingpin"
 	yaml "gopkg.in/yaml.v2"
 )
 

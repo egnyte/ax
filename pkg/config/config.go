@@ -13,13 +13,13 @@ import (
 
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/zefhemel/kingpin"
+	"github.com/egnyte/kingpin"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/olekukonko/tablewriter"
-	"github.com/zefhemel/ax/pkg/backend/common"
-	"github.com/zefhemel/ax/pkg/backend/docker"
-	"github.com/zefhemel/ax/pkg/backend/kibana"
+	"github.com/egnyte/ax/pkg/backend/common"
+	"github.com/egnyte/ax/pkg/backend/docker"
+	"github.com/egnyte/ax/pkg/backend/kibana"
 )
 
 var dataDir string

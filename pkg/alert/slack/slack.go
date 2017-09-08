@@ -10,8 +10,8 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/zefhemel/ax/pkg/alert"
-	"github.com/zefhemel/ax/pkg/backend/common"
+	"github.com/egnyte/ax/pkg/alert"
+	"github.com/egnyte/ax/pkg/backend/common"
 )
 
 type SlackAlerter struct {
