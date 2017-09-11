@@ -18,8 +18,8 @@ func TestFindTimestamp(t *testing.T) {
 		if msg.Timestamp.Day() != 4 {
 			t.Error("Wrong day", msg.Timestamp.Day())
 		}
-		if msg.Timestamp.Hour() != 11 {
-			t.Error("Wrong hour", msg.Timestamp.Hour())
+		if msg.Timestamp.Minute() != 16 {
+			t.Error("Wrong minute", msg.Timestamp.Minute())
 		}
 	}
 }
