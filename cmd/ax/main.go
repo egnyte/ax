@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/egnyte/kingpin"
+	"github.com/zefhemel/kingpin"
 
 	"github.com/egnyte/ax/pkg/backend/common"
 	"github.com/egnyte/ax/pkg/backend/docker"

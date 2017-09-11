@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
-	"github.com/fatih/color"
 	"github.com/egnyte/ax/pkg/backend/common"
 	"github.com/egnyte/ax/pkg/complete"
 	"github.com/egnyte/ax/pkg/config"
-	"github.com/egnyte/kingpin"
+	"github.com/fatih/color"
+	"github.com/zefhemel/kingpin"
 	yaml "gopkg.in/yaml.v2"
 )
 

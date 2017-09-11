@@ -1,7 +1,7 @@
 builds:
   - binary: ax
+    main: ./cmd/ax
     goos:
-      - windows
       - darwin
       - linux
     goarch:
