@@ -1,3 +1,4 @@
+![Travis CI status image](https://travis-ci.org/egnyte/ax.svg?branch=master)
 # Ax
 It's a structured logging world we live in, but do we really have to look at JSON? Not with Ax.
 
