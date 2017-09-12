@@ -35,7 +35,7 @@ var (
 )
 
 func init() {
-	queryCommand.Flag("results", "Maximum number of results").Short('n').Default("200").IntVar(&queryFlagMaxResults)
+	queryCommand.Flag("results", "Maximum number of results").Short('n').Default("50").IntVar(&queryFlagMaxResults)
 	queryCommand.Flag("output", "Output format: text|json|yaml").Short('o').Default("text").EnumVar(&queryFlagOutputFormat, "text", "yaml", "json", "pretty-json")
 	queryCommand.Flag("follow", "Follow log in quasi-realtime, similar to tail -f").Short('f').Default("false").BoolVar(&queryFlagFollow)
 }

@@ -62,6 +62,14 @@ func (cache *Cache) Get(key string) interface{} {
 	}
 }
 
+func (cache *Cache) GetString(key string) string {
+	return cache.Get(key).(string)
+}
+
+func (cache *Cache) GetMap(key string) map[string]interface{} {
+	return cache.Get(key).(map[string]interface{})
+}
+
 func (cache *Cache) Flush() error {
 	file, err := os.OpenFile(cache.path, os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {

@@ -136,13 +136,17 @@ func (client *Client) queryMessages(subIndex string, query common.Query) ([]Hit,
 	return hits, nil
 }
 
+// Implements "follow" mode for Kibana.
+// Effectively this repeats the query every 5s and skips messages already seen
+// Previously this was implemented by only requesting messages with a timestamp
+// after the last seen one, but because sometimes logs arrive out of order, this
+// resulted in skipping logs.
 func (client *Client) queryFollow(q common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 	go func() {
-		var after *time.Time
 		retries := 0
+		seenMessageIds := make(map[string]bool)
 		for {
-			q.After = after
 			allMessages, err := client.querySubIndex(client.Index, q)
 			if err != nil {
 				retries++
@@ -158,13 +162,12 @@ func (client *Client) queryFollow(q common.Query) <-chan common.LogMessage {
 			// Request succesful, so reset retry count
 			retries = 0
 			for _, message := range allMessages {
+				if _, ok := seenMessageIds[message.ID]; ok {
+					// Already seen this message, skipping
+					continue
+				}
+				seenMessageIds[message.ID] = true
 				resultChan <- message
-				after = &message.Timestamp
-			}
-			if after == nil {
-				fmt.Fprintf(os.Stderr, "Could determine latest hit, defaulting to now")
-				afterDate := time.Now()
-				after = &afterDate
 			}
 			time.Sleep(5 * time.Second)
 		}

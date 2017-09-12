@@ -71,6 +71,13 @@ func (lm LogMessage) UniqueID() string {
 	return fmt.Sprintf("%x", h.Sum(nil))[0:10]
 }
 
+func (lm LogMessage) ContentHash() string {
+	h := sha1.New()
+	encoder := json.NewEncoder(h)
+	encoder.Encode(&lm.Attributes)
+	return fmt.Sprintf("%x", h.Sum(nil))[0:10]
+}
+
 func NewLogMessage() LogMessage {
 	return LogMessage{
 		Attributes: make(map[string]interface{}),

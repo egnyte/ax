@@ -7,7 +7,6 @@ import (
 	"github.com/egnyte/ax/pkg/alert"
 	"github.com/egnyte/ax/pkg/alert/slack"
 	"github.com/egnyte/ax/pkg/backend/common"
-	"github.com/egnyte/ax/pkg/cache"
 	"github.com/egnyte/ax/pkg/config"
 )
 
@@ -41,14 +40,13 @@ func watchAlerts(rc config.RuntimeConfig, alertConfig config.AlertConfig) {
 	var alerter alert.Alerter
 	switch alertConfig.Service["backend"] {
 	case "slack":
-		alerter = slack.New(alertConfig.Name, alertConfig.Service)
+		alerter = slack.New(alertConfig.Name, rc.DataDir, alertConfig.Service)
 	default:
 		panic("No such backend")
 	}
 	query := querySelectorsToQuery(&alertConfig.Selector)
 	query.Follow = true
-	query.MaxResults = 5
-	seenIdCache := cache.New(fmt.Sprintf("%s/alert-%s-seen.json", rc.DataDir, alertConfig.Name))
+	query.MaxResults = 100
 	client := determineClient(rc.Config.Environments[alertConfig.Env])
 	if client == nil {
 		fmt.Println("Cannot obtain a client for", alertConfig)
@@ -56,20 +54,11 @@ func watchAlerts(rc config.RuntimeConfig, alertConfig config.AlertConfig) {
 	}
 	fmt.Println("Now waiting for alerts for", alertConfig.Name)
 	for message := range client.Query(query) {
-		if seenIdCache.Contains(message.UniqueID()) {
-			//fmt.Println("Skipping one")
-			continue
-		}
-		expire := time.Now().Add(time.Hour * 24 * 30)
-		seenIdCache.Set(message.UniqueID(), true, &expire)
 		fmt.Printf("[%s] Sending alert to %s: %+v\n", alertConfig.Name, alertConfig.Service["backend"], message.Map())
 		err := alerter.SendAlert(message)
 		if err != nil {
 			fmt.Println("Couldn't send alert", err)
-		}
-		err = seenIdCache.Flush()
-		if err != nil {
-			fmt.Println("Couldn't flush cache", err)
+			continue
 		}
 	}
 }
