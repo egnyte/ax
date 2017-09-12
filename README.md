@@ -2,12 +2,18 @@
 # Ax
 It's a structured logging world we live in, but do we really have to look at JSON? Not with Ax.
 
-## Installation
-For now there's no pre-built binaries, so to run this you need a reasonably recent version of Go. Then either git clone this project in `$GOPATH/src/github.com/egnyte/ax` or run `go get -u github.com/egnyte/ax`.
+## Installation/Upgrades
+For now there's no pre-built binaries, so to run this you need a reasonably recent version of Go, then download it into your GOPATH:
 
-To install dependencies:
+    go get -u github.com/egnyte/ax/...
 
-    make deps
+This will also put the `ax` binary into your `$GOPATH/bin` so make sure that's in your `$PATH`.
+
+To update Ax to the latest and greatest, just rerun the command above.
+
+## Development
+
+After the above `go get` call, you will have a git checkout of the repo under `$GOPATH/src/github.com/egnyte/ax`. If you want to work on Ax, just for the repo and update `.git/config` appropriately.
 
 To run tests:
 
@@ -15,14 +21,6 @@ To run tests:
 
 To "go install" ax (this will put the resulting binary in `$GOPATH/bin` so put that in your `$PATH`)
 
-    make
-
-
-## Upgrade
-
-In `$GOPATH/src/github.com/egnyte/ax`:
-
-    git pull
     make
 
 ## Setup
