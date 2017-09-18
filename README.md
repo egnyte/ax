@@ -1,6 +1,18 @@
 [![Travis CI status image](https://travis-ci.org/egnyte/ax.svg?branch=master)](https://travis-ci.org/egnyte/ax)
 # Ax
-It's a structured logging world we live in, but do we really have to look at JSON? Not with Ax.
+It's a structured logging world we live in, but do we really have to look at JSON logs? Not with Ax.
+
+Ax features:
+
+* Read logs from various sources, currently:
+    * Kibana
+    * Piped input
+    * Docker containers
+* Filter logs based on attribute (field) values as well as text phrase search
+* Select only the attributes you are interested in
+* The ability to "follow" logs (Ax keeps running and shows new results as they come in)
+* Various output format (pretty text, JSON, pretty JSON, YAML) that can be used for further processing
+* Command completion for all commands and flags (e.g. completing attribute names)
 
 ## Installation/Upgrades
 For now there's no pre-built binaries, so to run this you need a reasonably recent version of Go, then download it into your GOPATH:
