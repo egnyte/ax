@@ -25,7 +25,7 @@ To update Ax to the latest and greatest, just rerun the command above.
 
 ## Development
 
-After the above `go get` call, you will have a git checkout of the repo under `$GOPATH/src/github.com/egnyte/ax`. If you want to work on Ax, just for the repo and update `.git/config` appropriately.
+After the above `go get` call, you will have a git checkout of the repo under `$GOPATH/src/github.com/egnyte/ax`. If you want to work on Ax, just fork the repo and update `.git/config` appropriately.
 
 To run tests:
 
