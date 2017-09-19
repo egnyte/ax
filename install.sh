@@ -58,7 +58,9 @@ is_supported_platform() {
   found=1
   case "$platform" in
     darwin/amd64) found=0 ;;
+    darwin/386) found=0 ;;
     linux/amd64) found=0 ;;
+    linux/386) found=0 ;;
   esac
   return $found
 }
@@ -76,8 +78,6 @@ adjust_version() {
     echo "$PREFIX: checking GitHub for latest version"
     VERSION=$(github_last_release "$OWNER/$REPO")
   fi
-  # if version starts with 'v', remove it
-  VERSION=${VERSION#v}
 }
 adjust_format() {
   # change format (tar.gz or zip) based on ARCH
@@ -293,9 +293,9 @@ echo "$PREFIX: found version ${VERSION} for ${OS}/${ARCH}"
 
 NAME=${BINARY}_${VERSION}_${OS}_${ARCH}
 TARBALL=${NAME}.${FORMAT}
-TARBALL_URL=${GITHUB_DOWNLOAD}/v${VERSION}/${TARBALL}
-CHECKSUM=${BINARY}_checksums.txt
-CHECKSUM_URL=${GITHUB_DOWNLOAD}/v${VERSION}/${CHECKSUM}
+TARBALL_URL=${GITHUB_DOWNLOAD}/${VERSION}/${TARBALL}
+CHECKSUM=ax_checksums.txt
+CHECKSUM_URL=${GITHUB_DOWNLOAD}/${VERSION}/${CHECKSUM}
 
 # Adjust binary name if windows
 if [ "$OS" = "windows" ]; then
