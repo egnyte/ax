@@ -27,9 +27,8 @@ type Query struct {
 	SelectFields []string
 	Filters      []QueryFilter
 	MaxResults   int
-	// QueryAsc     bool
-	// ResultsDesy  bool
-	Follow bool
+	Unique       bool
+	Follow       bool
 }
 
 type QuerySelectors struct {
@@ -37,6 +36,7 @@ type QuerySelectors struct {
 	After       string   `yaml:"after,omitempty"`
 	Select      []string `yaml:"select,omitempty"`
 	Where       []string `yaml:"where,omitempty"`
+	Unique      bool     `yaml:"unique,omitempty"`
 	QueryString []string `yaml:"query,omitempty"`
 }
 

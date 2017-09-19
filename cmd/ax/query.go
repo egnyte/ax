@@ -23,6 +23,7 @@ func addQueryFlags(cmd *kingpin.CmdClause) *common.QuerySelectors {
 	cmd.Flag("after", "Results from after").StringVar(&flags.After)
 	cmd.Flag("select", "Fields to select").Short('s').HintAction(selectHintAction).StringsVar(&flags.Select)
 	cmd.Flag("where", "Add a filter").Short('w').HintAction(whereHintAction).StringsVar(&flags.Where)
+	cmd.Flag("uniq", "Unique log messages only").Default("false").BoolVar(&flags.Unique)
 	cmd.Arg("query", "Query string").Default("").StringsVar(&flags.QueryString)
 	return flags
 }
@@ -108,6 +109,7 @@ func querySelectorsToQuery(flags *common.QuerySelectors) common.Query {
 		After:        after,
 		Filters:      buildFilters(flags.Where),
 		SelectFields: flags.Select,
+		Unique:       flags.Unique,
 	}
 }
 
@@ -115,7 +117,15 @@ func queryMain(rc config.RuntimeConfig, client common.Client) {
 	query := querySelectorsToQuery(queryFlags)
 	query.MaxResults = queryFlagMaxResults
 	query.Follow = queryFlagFollow
+	seenBeforeHash := make(map[string]bool)
 	for message := range complete.GatherCompletionInfo(rc, client.Query(query)) {
+		if query.Unique {
+			contentHash := message.ContentHash()
+			if seenBeforeHash[contentHash] {
+				continue
+			}
+			seenBeforeHash[contentHash] = true
+		}
 		printMessage(message, queryFlagOutputFormat)
 	}
 
