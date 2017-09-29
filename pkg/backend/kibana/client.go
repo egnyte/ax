@@ -31,9 +31,12 @@ func (client *Client) addHeaders(req *http.Request) {
 }
 
 type indexList struct {
-	Hits struct {
-		Hits []indexListHit `json:"hits"`
-	} `json:"hits"`
+	SavedObjects []struct {
+		Type       string `json:"type"`
+		Attributes struct {
+			Title string `json:"title"`
+		}
+	} `json:"saved_objects"`
 }
 
 type indexListHit struct {
@@ -41,18 +44,7 @@ type indexListHit struct {
 }
 
 func (client *Client) ListIndices() ([]string, error) {
-	body, err := createMultiSearch(
-		JsonObject{
-			"query": JsonObject{
-				"match_all": JsonObject{},
-			},
-			"size": 10000,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/es_admin/.kibana/index-pattern/_search?stored_fields=", client.URL), body)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/saved_objects/?type=index-pattern&per_page=10000", client.URL), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -75,9 +67,11 @@ func (client *Client) ListIndices() ([]string, error) {
 		return nil, err
 	}
 	// Build list
-	indexNames := make([]string, 0, len(data.Hits.Hits))
-	for _, indexInfo := range data.Hits.Hits {
-		indexNames = append(indexNames, indexInfo.Id)
+	indexNames := make([]string, 0, len(data.SavedObjects))
+	for _, indexInfo := range data.SavedObjects {
+		if indexInfo.Type == "index-pattern" {
+			indexNames = append(indexNames, indexInfo.Attributes.Title)
+		}
 	}
 	return indexNames, nil
 }
