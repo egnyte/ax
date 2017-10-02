@@ -6,3 +6,7 @@ test:
 
 deps:
 	go get ./cmd/... ./pkg/...
+
+release:
+	rm -rf dist bin
+	goreleaser
