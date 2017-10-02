@@ -14,7 +14,28 @@ Ax features:
 * Various output format (pretty text, JSON, pretty JSON, YAML) that can be used for further processing
 * Command completion for all commands and flags (e.g. completing attribute names)
 
-## Installation/Upgrades
+## Installation
+Ax can be installed in two ways:
+
+1. through downloading pre-compiled binaries (for official releases)
+2. through fetching the latest version from Github and compiling using the Go tools
+
+### Pre-compiled binaries
+On Linux or Mac (this will attempt to install the binary into `/usr/local/bin` by default):
+
+    curl -sfL https://raw.githubusercontent.com/egnyte/ax/master/install.sh | sh
+
+If you want to install the `ax` binary into another location, simply set the `BINDIR` environment variable, e.g.:
+
+    curl -sfL https://raw.githubusercontent.com/egnyte/ax/master/install.sh | BINDIR=. sh
+
+to install in the current directory.
+
+If you don't trust piping random shell scripts from the internet into a shell, feel free to download the `install.sh` script first, inspect it, then run it through bash manually or, simply go through the [Ax releases](https://github.com/egnyte/ax/releases) page and download the tarball of your choice.
+
+Upgrades can be installed by simply re-running the above command.
+
+### Bleeding edge with Go-tools
 For now there's no pre-built binaries, so to run this you need a reasonably recent version of Go, then download it into your GOPATH:
 
     go get -u github.com/egnyte/ax/...
