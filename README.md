@@ -139,3 +139,6 @@ or pretty JSON:
 
     ax --help
     ax query --help
+
+# Found anything broken?
+Report it as a Github issue!
