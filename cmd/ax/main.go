@@ -9,6 +9,7 @@ import (
 
 	"github.com/egnyte/ax/pkg/backend/common"
 	"github.com/egnyte/ax/pkg/backend/docker"
+	"github.com/egnyte/ax/pkg/backend/file"
 	"github.com/egnyte/ax/pkg/backend/kibana"
 	"github.com/egnyte/ax/pkg/backend/stream"
 	"github.com/egnyte/ax/pkg/backend/subprocess"
@@ -29,6 +30,8 @@ func determineClient(em config.EnvMap) common.Client {
 		client = stream.New(os.Stdin)
 	} else if em["backend"] == "docker" {
 		client = docker.New(em["pattern"])
+	} else if em["backend"] == "file" {
+		client = file.New(em["filename"])
 	} else if em["backend"] == "kibana" {
 		client = kibana.New(em["url"], em["auth"], em["index"])
 	} else if em["backend"] == "subprocess" {

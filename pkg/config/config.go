@@ -51,6 +51,7 @@ type RuntimeConfig struct {
 var (
 	activeEnv      = kingpin.Flag("env", "Environment to connect to").Short('e').HintAction(envHintAction).String()
 	dockerFlag     = kingpin.Flag("docker", "Query docker container logs").HintAction(docker.DockerHintAction).String()
+	fileFlag       = kingpin.Flag("file", "Query logs in a file").String()
 	envCommand     = kingpin.Command("env", "Environment management commands")
 	envInitCommand = envCommand.Command("add", "Add an environment")
 	envEditCommand = envCommand.Command("edit", "Edit your environment configuration file in a text editor")
@@ -115,6 +116,11 @@ func BuildConfig() RuntimeConfig {
 		rc.ActiveEnv = fmt.Sprintf("docker.%s", *dockerFlag)
 		rc.Env["backend"] = "docker"
 		rc.Env["pattern"] = *dockerFlag
+	}
+	if *fileFlag != "" {
+		rc.ActiveEnv = fmt.Sprintf("docker.%s", *fileFlag)
+		rc.Env["backend"] = "file"
+		rc.Env["filename"] = *fileFlag
 	}
 
 	return rc
