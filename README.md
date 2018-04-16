@@ -7,6 +7,7 @@ Ax features:
 * Read logs from various sources, currently:
     * Kibana
     * Piped input
+    * Files (plain files, .gz and .bz2 compressed based on file extension)
     * Docker containers
 * Filter logs based on attribute (field) values as well as text phrase search
 * Select only the attributes you are interested in

@@ -1,24 +1,46 @@
 package file
 
 import (
+	"compress/bzip2"
+	"compress/gzip"
+	"fmt"
+	"io"
+	"os"
+	"strings"
+
 	"github.com/egnyte/ax/pkg/backend/common"
-	"github.com/egnyte/ax/pkg/backend/subprocess"
+	"github.com/egnyte/ax/pkg/backend/stream"
 )
 
 type FileClient struct {
 	filename string
 }
 
+func openReader(filename string) (io.Reader, error) {
+	r, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	if strings.HasSuffix(filename, ".gz") {
+		return gzip.NewReader(r)
+	}
+	if strings.HasSuffix(filename, ".bz2") {
+		bzipReader := bzip2.NewReader(r)
+		return bzipReader, nil
+	}
+	return r, nil
+}
+
 func (client *FileClient) Query(query common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
-	command := []string{"cat"}
-	if query.Follow {
-		command = []string{"tail", "-f"}
+	reader, err := openReader(client.filename)
+	if err != nil {
+		fmt.Printf("Could not open file %s for reading: %s", client.filename, err.Error())
+		os.Exit(1)
 	}
-	command = append(command, client.filename)
-	proc := subprocess.New(command)
+	streamReader := stream.New(reader)
 	go func() {
-		for message := range proc.Query(query) {
+		for message := range streamReader.Query(query) {
 			resultChan <- message
 		}
 		close(resultChan)
