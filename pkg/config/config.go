@@ -118,7 +118,7 @@ func BuildConfig() RuntimeConfig {
 		rc.Env["pattern"] = *dockerFlag
 	}
 	if *fileFlag != "" {
-		rc.ActiveEnv = fmt.Sprintf("docker.%s", *fileFlag)
+		rc.ActiveEnv = fmt.Sprintf("file.%s", *fileFlag)
 		rc.Env["backend"] = "file"
 		rc.Env["filename"] = *fileFlag
 	}

@@ -101,6 +101,12 @@ You can also pipe logs directly into Ax:
 
     tail -f /var/log/something.log | ax
 
+## Use with (compressed) log files
+An alternative to tailing files into Ax, you can also read them directly. This even supports gzip and bzip2 compression (decided based on the `.gz` and `.bz2` extensions):
+
+    ax --file mylog.log
+    ax --file mylog.log.gz
+
 # Filtering and selecting attributes
 Looking at all logs is nice, but it only gets really interesting if you can start to filter stuff and by selecting only certain attributes.
 
