@@ -30,18 +30,19 @@ func (client *SubprocessClient) Query(query common.Query) <-chan common.LogMessa
 	go func() {
 		stdOutQuery := stdOutStream.Query(query)
 		stdErrQuery := stdErrStream.Query(query)
-		closed := 0
-		for closed < 2 {
+		stdOutOpen := true
+		stdErrOpen := true
+		for stdOutOpen || stdErrOpen {
 			select {
 			case message, ok := <-stdOutQuery:
 				if !ok {
-					closed++
+					stdOutOpen = false
 					continue
 				}
 				resultChan <- message
 			case message, ok := <-stdErrQuery:
 				if !ok {
-					closed++
+					stdErrOpen = false
 					continue
 				}
 				resultChan <- message
