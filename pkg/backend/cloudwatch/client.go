@@ -15,7 +15,8 @@ import (
 )
 
 // TODO
-// - Follow
+// - Get rid of panic, handle context properly
+// - Follow support
 // - Date range support
 
 type CloudwatchClient struct {
@@ -66,7 +67,7 @@ func (client *CloudwatchClient) Query(ctx context.Context, query common.Query) <
 	resultChan := make(chan common.LogMessage)
 
 	go func() {
-		resp, err := client.client.FilterLogEvents(&cloudwatchlogs.FilterLogEventsInput{
+		resp, err := client.client.FilterLogEventsWithContext(ctx, &cloudwatchlogs.FilterLogEventsInput{
 			LogGroupName:  aws.String(client.groupName),
 			FilterPattern: aws.String(queryToFilterPattern(query)),
 			Limit:         aws.Int64(int64(query.MaxResults)),
