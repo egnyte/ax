@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -36,7 +37,7 @@ func addAlertMain(rc config.RuntimeConfig, client common.Client) {
 	config.SaveConfig(conf)
 }
 
-func watchAlerts(rc config.RuntimeConfig, alertConfig config.AlertConfig) {
+func watchAlerts(ctx context.Context, rc config.RuntimeConfig, alertConfig config.AlertConfig) {
 	var alerter alert.Alerter
 	switch alertConfig.Service["backend"] {
 	case "slack":
@@ -53,7 +54,7 @@ func watchAlerts(rc config.RuntimeConfig, alertConfig config.AlertConfig) {
 		return
 	}
 	fmt.Println("Now waiting for alerts for", alertConfig.Name)
-	for message := range client.Query(query) {
+	for message := range client.Query(ctx, query) {
 		fmt.Printf("[%s] Sending alert to %s: %+v\n", alertConfig.Name, alertConfig.Service["backend"], message.Map())
 		err := alerter.SendAlert(message)
 		if err != nil {
@@ -63,9 +64,9 @@ func watchAlerts(rc config.RuntimeConfig, alertConfig config.AlertConfig) {
 	}
 }
 
-func alertMain(rc config.RuntimeConfig) {
+func alertMain(ctx context.Context, rc config.RuntimeConfig) {
 	for _, alert := range rc.Config.Alerts {
-		go watchAlerts(rc, alert)
+		go watchAlerts(ctx, rc, alert)
 	}
 	for {
 		time.Sleep(time.Minute)

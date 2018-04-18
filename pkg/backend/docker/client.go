@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -29,7 +30,7 @@ func DockerHintAction() []string {
 	return GetRunningContainers("")
 }
 
-func (client *DockerClient) Query(query common.Query) <-chan common.LogMessage {
+func (client *DockerClient) Query(ctx context.Context, query common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 	runningCommands := 0
 	for _, containerName := range GetRunningContainers(client.containerPattern) {
@@ -41,7 +42,7 @@ func (client *DockerClient) Query(query common.Query) <-chan common.LogMessage {
 		client := subprocess.New(command)
 		runningCommands++
 		go func() {
-			for message := range client.Query(query) {
+			for message := range client.Query(ctx, query) {
 				message.Attributes["@container"] = containerName
 				resultChan <- message
 			}

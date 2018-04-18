@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -113,12 +114,12 @@ func querySelectorsToQuery(flags *common.QuerySelectors) common.Query {
 	}
 }
 
-func queryMain(rc config.RuntimeConfig, client common.Client) {
+func queryMain(ctx context.Context, rc config.RuntimeConfig, client common.Client) {
 	query := querySelectorsToQuery(queryFlags)
 	query.MaxResults = queryFlagMaxResults
 	query.Follow = queryFlagFollow
 	seenBeforeHash := make(map[string]bool)
-	for message := range complete.GatherCompletionInfo(rc, client.Query(query)) {
+	for message := range complete.GatherCompletionInfo(rc, client.Query(ctx, query)) {
 		if query.Unique {
 			contentHash := message.ContentHash()
 			if seenBeforeHash[contentHash] {
