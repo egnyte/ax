@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/zefhemel/kingpin"
 
 	"github.com/egnyte/ax/pkg/backend/cloudwatch"
 	"github.com/egnyte/ax/pkg/backend/common"
 	"github.com/egnyte/ax/pkg/backend/docker"
-	"github.com/egnyte/ax/pkg/backend/file"
 	"github.com/egnyte/ax/pkg/backend/kibana"
 	"github.com/egnyte/ax/pkg/backend/stream"
 	"github.com/egnyte/ax/pkg/backend/subprocess"
@@ -32,8 +33,6 @@ func determineClient(em config.EnvMap) common.Client {
 		client = stream.New(os.Stdin)
 	} else if em["backend"] == "docker" {
 		client = docker.New(em["pattern"])
-	} else if em["backend"] == "file" {
-		client = file.New(em["filename"])
 	} else if em["backend"] == "kibana" {
 		client = kibana.New(em["url"], em["auth"], em["index"])
 	} else if em["backend"] == "cloudwatch" {
@@ -50,7 +49,16 @@ func main() {
 	rc := config.BuildConfig()
 	client := determineClient(rc.Env)
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println("Canceled through SIGTERM (Ctrl-c)")
+		cancel()
+		// os.Exit(1)
+	}()
 
 	switch cmd {
 	case "query":

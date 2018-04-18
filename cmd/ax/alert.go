@@ -43,7 +43,8 @@ func watchAlerts(ctx context.Context, rc config.RuntimeConfig, alertConfig confi
 	case "slack":
 		alerter = slack.New(alertConfig.Name, rc.DataDir, alertConfig.Service)
 	default:
-		panic("No such backend")
+		fmt.Printf("Back-end type not supported: %s\n", alertConfig.Service["backend"])
+		return
 	}
 	query := querySelectorsToQuery(&alertConfig.Selector)
 	query.Follow = true

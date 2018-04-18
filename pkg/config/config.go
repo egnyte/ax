@@ -259,9 +259,11 @@ func init() {
 	}
 
 	// Set up logging
-	f, err := os.Create(fmt.Sprintf("%s/ax.log", dataDir))
+	logPath := fmt.Sprintf("%s/ax.log", dataDir)
+	f, err := os.Create(logPath)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Could not use %s for logging, logging to stdout instead\n", logPath)
+		return // Skips log.SetOutput, defaults to stdout
 	}
 	log.SetOutput(f)
 }

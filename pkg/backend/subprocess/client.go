@@ -2,6 +2,8 @@ package subprocess
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"os/exec"
 
 	"github.com/egnyte/ax/pkg/backend/common"
@@ -13,21 +15,27 @@ type SubprocessClient struct {
 }
 
 func (client *SubprocessClient) Query(ctx context.Context, query common.Query) <-chan common.LogMessage {
+	resultChan := make(chan common.LogMessage)
 	cmd := exec.Command(client.command[0], client.command[1:]...)
 	stdOut, err := cmd.StdoutPipe()
 	if err != nil {
-		panic(err)
+		log.Printf("Could not get stdout pipe: %v", err)
+		close(resultChan)
+		return resultChan
 	}
 	stdOutStream := stream.New(stdOut)
 	stdErr, err := cmd.StderrPipe()
 	if err != nil {
-		panic(err)
+		log.Printf("Could not get stderr pipe: %v", err)
+		close(resultChan)
+		return resultChan
 	}
 	stdErrStream := stream.New(stdErr)
 	if err := cmd.Start(); err != nil {
-		panic(err)
+		fmt.Printf("Could not start process: %s because: %v\n", client.command[0], err)
+		close(resultChan)
+		return resultChan
 	}
-	resultChan := make(chan common.LogMessage)
 	go func() {
 		stdOutQuery := stdOutStream.Query(ctx, query)
 		stdErrQuery := stdErrStream.Query(ctx, query)
@@ -47,12 +55,17 @@ func (client *SubprocessClient) Query(ctx context.Context, query common.Query) <
 					continue
 				}
 				resultChan <- message
+			case <-ctx.Done():
+				close(resultChan)
+				cmd.Process.Kill() // Ignoring error, not sure if that's ok
+				// Returning to avoid the Wait()
+				return
 			}
 
 		}
 		close(resultChan)
 		if err := cmd.Wait(); err != nil {
-			panic(err)
+			fmt.Printf("Process exited with error: %v\n", err)
 		}
 	}()
 	return resultChan

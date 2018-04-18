@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"log"
 	"os/exec"
 	"strings"
 
@@ -21,7 +22,8 @@ func GetRunningContainers(pattern string) []string {
 	}
 	allContainers, err := exec.Command("docker", flags...).Output()
 	if err != nil {
-		panic(err)
+		log.Printf("Retrieving all containers failed: %v\n", err)
+		return []string{}
 	}
 	return strings.Split(strings.TrimSpace(string(allContainers)), "\n")
 }

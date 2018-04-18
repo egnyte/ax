@@ -38,7 +38,7 @@ func (a hitsByAscDate) Less(i, j int) bool {
 	return a[i].Source["@timestamp"].(string) < a[j].Source["@timestamp"].(string)
 }
 
-func (client *Client) queryMessages(subIndex string, query common.Query) ([]Hit, error) {
+func (client *Client) queryMessages(ctx context.Context, subIndex string, query common.Query) ([]Hit, error) {
 	queryString := fmt.Sprintf("\"%s\"", query.QueryString) // TODO: Handle quotes properly
 	if query.QueryString == "" {
 		queryString = "*"
@@ -116,6 +116,7 @@ func (client *Client) queryMessages(subIndex string, query common.Query) ([]Hit,
 		return nil, err
 	}
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/elasticsearch/_msearch", client.URL), body)
+	req = req.WithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -142,13 +143,13 @@ func (client *Client) queryMessages(subIndex string, query common.Query) ([]Hit,
 // Previously this was implemented by only requesting messages with a timestamp
 // after the last seen one, but because sometimes logs arrive out of order, this
 // resulted in skipping logs.
-func (client *Client) queryFollow(q common.Query) <-chan common.LogMessage {
+func (client *Client) queryFollow(ctx context.Context, q common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 	go func() {
 		retries := 0
 		seenMessageIds := make(map[string]bool)
 		for {
-			allMessages, err := client.querySubIndex(client.Index, q)
+			allMessages, err := client.querySubIndex(ctx, client.Index, q)
 			if err != nil {
 				retries++
 				if retries < 10 {
@@ -183,12 +184,19 @@ func (client *Client) Query(ctx context.Context, q common.Query) <-chan common.L
 		q.Before = &before // Limit sanity
 	}
 	if q.Follow {
-		return client.queryFollow(q)
+		return client.queryFollow(ctx, q)
 	}
 	go func() {
 		printedResultsCount := 0
 		fmt.Fprintf(os.Stderr, "Querying index %s\n", client.Index)
-		allMessages, err := client.querySubIndex(client.Index, q)
+		allMessages, err := client.querySubIndex(ctx, client.Index, q)
+		// Check if the context wasn't canceled
+		select {
+		case <-ctx.Done():
+			close(resultChan)
+			return
+		default:
+		}
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not connect to Kibana: %v", err)
 			os.Exit(2)
@@ -206,15 +214,14 @@ func (client *Client) Query(ctx context.Context, q common.Query) <-chan common.L
 	return resultChan
 }
 
-func (client *Client) querySubIndex(subIndex string, q common.Query) ([]common.LogMessage, error) {
-	hits, err := client.queryMessages(subIndex, q)
+func (client *Client) querySubIndex(ctx context.Context, subIndex string, q common.Query) ([]common.LogMessage, error) {
+	hits, err := client.queryMessages(ctx, subIndex, q)
 	if err != nil {
 		return nil, err
 	}
 
 	allMessages := make([]common.LogMessage, 0, 200)
 	for _, hit := range hits {
-		//var ts time.Time
 		attributes := hit.Source
 		ts, err := time.Parse(time.RFC3339, attributes["@timestamp"].(string))
 		if err != nil {

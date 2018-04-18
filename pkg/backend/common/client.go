@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 )
@@ -88,7 +89,8 @@ func NewLogMessage() LogMessage {
 func MustJsonEncode(obj interface{}) string {
 	buf, err := json.Marshal(obj)
 	if err != nil {
-		panic(err)
+		log.Printf("Could not JSON encode: %+v\n", obj)
+		return "{}"
 	}
 	return string(buf)
 }
@@ -97,7 +99,7 @@ func MustJsonDecode(jsonString string, dst interface{}) {
 	decoder := json.NewDecoder(strings.NewReader(jsonString))
 	err := decoder.Decode(dst)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
@@ -141,7 +143,8 @@ func (f QueryFilter) Matches(m LogMessage) bool {
 	case "!=":
 		return !ok || (ok && f.Value != fmt.Sprintf("%v", val))
 	default:
-		panic("Not supported operator")
+		fmt.Printf("Not supported operatior: %s\n", f.Operator)
+		return false
 	}
 }
 
