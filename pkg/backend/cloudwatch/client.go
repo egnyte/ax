@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -61,7 +62,7 @@ func queryToFilterPattern(query common.Query) string {
 	return strings.TrimSpace(filterPattern)
 }
 
-func (client *CloudwatchClient) Query(query common.Query) <-chan common.LogMessage {
+func (client *CloudwatchClient) Query(ctx context.Context, query common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 
 	go func() {
