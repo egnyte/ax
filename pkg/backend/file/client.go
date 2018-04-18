@@ -3,6 +3,7 @@ package file
 import (
 	"compress/bzip2"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -31,7 +32,7 @@ func openReader(filename string) (io.Reader, error) {
 	return r, nil
 }
 
-func (client *FileClient) Query(query common.Query) <-chan common.LogMessage {
+func (client *FileClient) Query(ctx context.Context, query common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 	reader, err := openReader(client.filename)
 	if err != nil {
@@ -40,7 +41,7 @@ func (client *FileClient) Query(query common.Query) <-chan common.LogMessage {
 	}
 	streamReader := stream.New(reader)
 	go func() {
-		for message := range streamReader.Query(query) {
+		for message := range streamReader.Query(ctx, query) {
 			resultChan <- message
 		}
 		close(resultChan)

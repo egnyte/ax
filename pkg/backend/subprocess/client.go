@@ -1,6 +1,7 @@
 package subprocess
 
 import (
+	"context"
 	"os/exec"
 
 	"github.com/egnyte/ax/pkg/backend/common"
@@ -11,7 +12,7 @@ type SubprocessClient struct {
 	command []string
 }
 
-func (client *SubprocessClient) Query(query common.Query) <-chan common.LogMessage {
+func (client *SubprocessClient) Query(ctx context.Context, query common.Query) <-chan common.LogMessage {
 	cmd := exec.Command(client.command[0], client.command[1:]...)
 	stdOut, err := cmd.StdoutPipe()
 	if err != nil {
@@ -28,8 +29,8 @@ func (client *SubprocessClient) Query(query common.Query) <-chan common.LogMessa
 	}
 	resultChan := make(chan common.LogMessage)
 	go func() {
-		stdOutQuery := stdOutStream.Query(query)
-		stdErrQuery := stdErrStream.Query(query)
+		stdOutQuery := stdOutStream.Query(ctx, query)
+		stdErrQuery := stdErrStream.Query(ctx, query)
 		stdOutOpen := true
 		stdErrOpen := true
 		for stdOutOpen || stdErrOpen {
@@ -47,6 +48,7 @@ func (client *SubprocessClient) Query(query common.Query) <-chan common.LogMessa
 				}
 				resultChan <- message
 			}
+
 		}
 		close(resultChan)
 		if err := cmd.Wait(); err != nil {

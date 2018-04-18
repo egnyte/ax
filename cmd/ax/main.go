@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -46,6 +47,8 @@ func main() {
 	rc := config.BuildConfig()
 	client := determineClient(rc.Env)
 
+	ctx := context.TODO()
+
 	switch cmd {
 	case "query":
 		if client == nil {
@@ -58,7 +61,7 @@ func main() {
 			fmt.Println("No default environment set, please use the --env flag to set one. Exiting.")
 			return
 		}
-		queryMain(rc, client)
+		queryMain(ctx, rc, client)
 	case "env add":
 		config.AddEnv()
 	case "env list":
@@ -68,7 +71,7 @@ func main() {
 	case "alert add":
 		addAlertMain(rc, client)
 	case "alertd":
-		alertMain(rc)
+		alertMain(ctx, rc)
 	}
 
 }

@@ -2,6 +2,7 @@ package stream
 
 import (
 	"bufio"
+	"context"
 
 	"io"
 
@@ -39,7 +40,7 @@ func parseLine(line string) common.LogMessage {
 	}
 }
 
-func (client *Client) Query(q common.Query) <-chan common.LogMessage {
+func (client *Client) Query(ctx context.Context, q common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 	reader := bufio.NewReader(client.reader)
 	go func() {

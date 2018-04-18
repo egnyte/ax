@@ -1,6 +1,7 @@
 package kibana
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -175,7 +176,7 @@ func (client *Client) queryFollow(q common.Query) <-chan common.LogMessage {
 	return resultChan
 }
 
-func (client *Client) Query(q common.Query) <-chan common.LogMessage {
+func (client *Client) Query(ctx context.Context, q common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 	if q.Before == nil {
 		before := time.Now().Add(12 * time.Hour)

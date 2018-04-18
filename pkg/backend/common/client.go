@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
@@ -11,7 +12,7 @@ import (
 var TimeFormat = time.RFC3339
 
 type Client interface {
-	Query(query Query) <-chan LogMessage
+	Query(ctx context.Context, query Query) <-chan LogMessage
 }
 
 type QueryFilter struct {
