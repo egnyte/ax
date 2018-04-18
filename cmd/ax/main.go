@@ -43,22 +43,28 @@ func determineClient(em config.EnvMap) common.Client {
 	return client
 }
 
+func sigtermContextHandler(ctx context.Context) context.Context {
+	ctx, cancel := context.WithCancel(ctx)
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println("Canceled through SIGTERM (Ctrl-c)")
+		cancel()
+		// os.Exit(1) -- commented out, implicitly exiting after context cancelation cascaded
+	}()
+
+	return ctx
+}
+
 func main() {
 	cmd := kingpin.Parse()
 
 	rc := config.BuildConfig()
 	client := determineClient(rc.Env)
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	c := make(chan os.Signal, 2)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		fmt.Println("Canceled through SIGTERM (Ctrl-c)")
-		cancel()
-		// os.Exit(1)
-	}()
+	ctx := sigtermContextHandler(context.Background())
 
 	switch cmd {
 	case "query":
