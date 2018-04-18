@@ -190,6 +190,7 @@ func (client *Client) Query(ctx context.Context, q common.Query) <-chan common.L
 		printedResultsCount := 0
 		fmt.Fprintf(os.Stderr, "Querying index %s\n", client.Index)
 		allMessages, err := client.querySubIndex(ctx, client.Index, q)
+		// Check if the context wasn't canceled
 		select {
 		case <-ctx.Done():
 			close(resultChan)
@@ -221,7 +222,6 @@ func (client *Client) querySubIndex(ctx context.Context, subIndex string, q comm
 
 	allMessages := make([]common.LogMessage, 0, 200)
 	for _, hit := range hits {
-		//var ts time.Time
 		attributes := hit.Source
 		ts, err := time.Parse(time.RFC3339, attributes["@timestamp"].(string))
 		if err != nil {
