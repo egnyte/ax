@@ -7,6 +7,7 @@ import (
 
 	"github.com/zefhemel/kingpin"
 
+	"github.com/egnyte/ax/pkg/backend/cloudwatch"
 	"github.com/egnyte/ax/pkg/backend/common"
 	"github.com/egnyte/ax/pkg/backend/docker"
 	"github.com/egnyte/ax/pkg/backend/file"
@@ -34,6 +35,8 @@ func determineClient(em config.EnvMap) common.Client {
 		client = file.New(em["filename"])
 	} else if em["backend"] == "kibana" {
 		client = kibana.New(em["url"], em["auth"], em["index"])
+	} else if em["backend"] == "cloudwatch" {
+		client = cloudwatch.New(em["accesskey"], em["accesssecretkey"], em["region"], em["groupname"])
 	} else if em["backend"] == "subprocess" {
 		client = subprocess.New(strings.Split(em["command"], " "))
 	}
