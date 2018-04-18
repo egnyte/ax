@@ -13,6 +13,8 @@ import (
 	"github.com/egnyte/ax/pkg/backend/stream"
 )
 
+// TODO: No Follow support
+
 type FileClient struct {
 	filename string
 }

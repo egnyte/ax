@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/zefhemel/kingpin"
 
@@ -47,7 +49,16 @@ func main() {
 	rc := config.BuildConfig()
 	client := determineClient(rc.Env)
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println("Canceled through SIGTERM (Ctrl-c)")
+		cancel()
+		// os.Exit(1)
+	}()
 
 	switch cmd {
 	case "query":

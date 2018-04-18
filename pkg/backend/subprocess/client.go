@@ -47,6 +47,11 @@ func (client *SubprocessClient) Query(ctx context.Context, query common.Query) <
 					continue
 				}
 				resultChan <- message
+			case <-ctx.Done():
+				close(resultChan)
+				cmd.Process.Kill() // Ignoring error, not sure if that's ok
+				// Returning to avoid the Wait()
+				return
 			}
 
 		}

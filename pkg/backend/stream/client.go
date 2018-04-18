@@ -46,6 +46,11 @@ func (client *Client) Query(ctx context.Context, q common.Query) <-chan common.L
 	go func() {
 		var ltFunc heuristic.LogTimestampParser
 		for {
+			select {
+			case <-ctx.Done():
+				// Context canceled, let's get outta here
+				break
+			}
 			line, err := reader.ReadString('\n')
 			if err != nil {
 				// TODO: erro != EOF break?
