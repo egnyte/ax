@@ -45,11 +45,13 @@ func (client *Client) Query(ctx context.Context, q common.Query) <-chan common.L
 	reader := bufio.NewReader(client.reader)
 	go func() {
 		var ltFunc heuristic.LogTimestampParser
+	LFor:
 		for {
 			select {
 			case <-ctx.Done():
 				// Context canceled, let's get outta here
-				break
+				break LFor
+			default:
 			}
 			line, err := reader.ReadString('\n')
 			if err != nil {
