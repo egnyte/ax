@@ -14,9 +14,6 @@ import (
 	"github.com/egnyte/ax/pkg/backend/common"
 )
 
-// TODO
-// - Date range support
-
 type CloudwatchClient struct {
 	client    *cloudwatchlogs.CloudWatchLogs
 	groupName string
@@ -62,10 +59,21 @@ func queryToFilterPattern(query common.Query) string {
 }
 
 func (client *CloudwatchClient) readLogBatch(ctx context.Context, query common.Query) ([]common.LogMessage, error) {
+	var startTime, endTime *int64 = nil, nil
+	if query.After != nil {
+		startTimeVal := (*query.After).UnixNano() / int64(time.Millisecond)
+		startTime = &startTimeVal
+	}
+	if query.Before != nil {
+		endTimeVal := (*query.Before).UnixNano() / int64(time.Millisecond)
+		endTime = &endTimeVal
+	}
 	resp, err := client.client.FilterLogEventsWithContext(ctx, &cloudwatchlogs.FilterLogEventsInput{
 		LogGroupName:  aws.String(client.groupName),
 		FilterPattern: aws.String(queryToFilterPattern(query)),
 		Limit:         aws.Int64(int64(query.MaxResults)),
+		StartTime:     startTime,
+		EndTime:       endTime,
 	})
 	if err != nil {
 		return nil, err
