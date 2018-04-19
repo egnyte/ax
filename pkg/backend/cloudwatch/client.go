@@ -15,7 +15,7 @@ import (
 )
 
 type CloudwatchClient struct {
-	client    *cloudwatchlogs.CloudWatchLogs
+	logs      *cloudwatchlogs.CloudWatchLogs
 	groupName string
 }
 
@@ -68,7 +68,7 @@ func (client *CloudwatchClient) readLogBatch(ctx context.Context, query common.Q
 		endTimeVal := (*query.Before).UnixNano() / int64(time.Millisecond)
 		endTime = &endTimeVal
 	}
-	resp, err := client.client.FilterLogEventsWithContext(ctx, &cloudwatchlogs.FilterLogEventsInput{
+	resp, err := client.logs.FilterLogEventsWithContext(ctx, &cloudwatchlogs.FilterLogEventsInput{
 		LogGroupName:  aws.String(client.groupName),
 		FilterPattern: aws.String(queryToFilterPattern(query)),
 		Limit:         aws.Int64(int64(query.MaxResults)),
@@ -116,7 +116,7 @@ func (client *CloudwatchClient) Query(ctx context.Context, query common.Query) <
 }
 
 func (client *CloudwatchClient) ListGroups() ([]string, error) {
-	resp, err := client.client.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{})
+	resp, err := client.logs.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{})
 	if err != nil {
 		return nil, err
 	}
@@ -139,10 +139,10 @@ func New(accessKey, accessSecretKey, region, groupName string) *CloudwatchClient
 		fmt.Printf("Could not create AWS Session: %s\n", err)
 		return nil
 	}
-	client := cloudwatchlogs.New(sess)
+	logs := cloudwatchlogs.New(sess)
 
 	return &CloudwatchClient{
-		client:    client,
+		logs:      logs,
 		groupName: groupName,
 	}
 
