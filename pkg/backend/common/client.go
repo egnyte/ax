@@ -11,7 +11,11 @@ import (
 	"time"
 )
 
-var TimeFormat = time.RFC3339
+const (
+	TimeFormat        = time.RFC3339
+	FollowPollTime    = 5 * time.Second
+	ConnectionRetries = 10
+)
 
 type Client interface {
 	Query(ctx context.Context, query Query) <-chan LogMessage
@@ -184,56 +188,64 @@ func MatchesQuery(m LogMessage, q Query) bool {
 	return matchFound
 }
 
-func ReQueryFollow(ctx context.Context, resultChan chan LogMessage, queryMessagesFunc func() ([]LogMessage, error)) {
-	retries := 0
-	for {
-		select {
-		case <-ctx.Done():
-			close(resultChan)
-			return
-		default:
-		}
-		allMessages, err := queryMessagesFunc()
-		select {
-		case <-ctx.Done():
-			close(resultChan)
-			return
-		default:
-		}
-		if err != nil {
-			fmt.Println(err)
-			retries++
+// This is a simplistic way to implement log "following" (tailing) in a generic way.
+// The idea is to simply execute the fetch log query (implemented by `queryMessagesFunc`) over and over, every `FollowPollTime` seconds,
+// and push the results through the deduplicating result channel returned (deduplication happens based on message ID)
+// This may seem overly inefficient, but due to the eventual-consistency type behavior of many log aggregation systems, logs may not actually
+// arrive in sequence, so requesting new logs based on timestamps won't work reliably.
+func ReQueryFollow(ctx context.Context, queryMessagesFunc func() ([]LogMessage, error)) <-chan LogMessage {
+	resultChan := make(chan LogMessage)
+	go func() {
+		retries := 0
+		for {
 			select {
 			case <-ctx.Done():
 				close(resultChan)
 				return
 			default:
 			}
-			if retries < 10 {
-				fmt.Fprintf(os.Stderr, "Could not connect: %v retrying in 5s\n", err)
-				if canceableSleep(ctx, 5*time.Second) {
-					// Canceled
+			allMessages, err := queryMessagesFunc()
+			select {
+			case <-ctx.Done():
+				close(resultChan)
+				return
+			default:
+			}
+			if err != nil {
+				fmt.Println(err)
+				retries++
+				select {
+				case <-ctx.Done():
+					close(resultChan)
+					return
+				default:
+				}
+				if retries < ConnectionRetries {
+					fmt.Fprintf(os.Stderr, "Could not connect: %v retrying in 5s\n", err)
+					if canceableSleep(ctx, FollowPollTime) {
+						// Canceled
+						close(resultChan)
+						return
+					}
+					continue
+				} else {
+					fmt.Fprintf(os.Stderr, "Could not connect: %v\nExceeded total number of retries, exiting.\n", err)
 					close(resultChan)
 					return
 				}
-				continue
-			} else {
-				fmt.Fprintf(os.Stderr, "Could not connect: %v\nExceeded total number of retries, exiting.\n", err)
+			}
+			// Request succesful, so reset retry count
+			retries = 0
+			for _, message := range allMessages {
+				resultChan <- message
+			}
+			if canceableSleep(ctx, FollowPollTime) {
 				close(resultChan)
 				return
 			}
 		}
-		// Request succesful, so reset retry count
-		retries = 0
-		for _, message := range allMessages {
-			// duplicate handling done by Dedup channel
-			resultChan <- message
-		}
-		if canceableSleep(ctx, 5*time.Second) {
-			close(resultChan)
-			return
-		}
-	}
+	}()
+	return Dedup(resultChan)
 }
 
 // Returns if canceled

@@ -86,33 +86,27 @@ func (client *CloudwatchClient) readLogBatch(ctx context.Context, query common.Q
 }
 
 func (client *CloudwatchClient) Query(ctx context.Context, query common.Query) <-chan common.LogMessage {
+	if query.Follow {
+		return common.ReQueryFollow(ctx, func() ([]common.LogMessage, error) {
+			return client.readLogBatch(ctx, query)
+		})
+	}
 	resultChan := make(chan common.LogMessage)
 
 	go func() {
-		if query.Follow {
-			common.ReQueryFollow(ctx, resultChan, func() ([]common.LogMessage, error) {
-				return client.readLogBatch(ctx, query)
-			})
-		} else {
-			messages, err := client.readLogBatch(ctx, query)
-			if err != nil {
-				fmt.Printf("Error while fetching logs: %s\n", err)
-				close(resultChan)
-				return
-			}
-			for _, message := range messages {
-				resultChan <- message
-			}
+		messages, err := client.readLogBatch(ctx, query)
+		if err != nil {
+			fmt.Printf("Error while fetching logs: %s\n", err)
 			close(resultChan)
+			return
 		}
+		for _, message := range messages {
+			resultChan <- message
+		}
+		close(resultChan)
 	}()
 
-	if query.Follow {
-		// Remove duplicates resulting of constant requerying
-		return common.Dedup(resultChan)
-	} else {
-		return resultChan
-	}
+	return resultChan
 }
 
 func (client *CloudwatchClient) ListGroups() ([]string, error) {

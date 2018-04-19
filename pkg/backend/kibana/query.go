@@ -144,14 +144,9 @@ func (client *Client) queryMessages(ctx context.Context, subIndex string, query 
 // after the last seen one, but because sometimes logs arrive out of order, this
 // resulted in skipping logs.
 func (client *Client) queryFollow(ctx context.Context, q common.Query) <-chan common.LogMessage {
-	resultChan := make(chan common.LogMessage)
-	go func() {
-		common.ReQueryFollow(ctx, resultChan, func() ([]common.LogMessage, error) {
-			return client.querySubIndex(ctx, client.Index, q)
-		})
-	}()
-	// Returning resultChan as a Dedup channel
-	return common.Dedup(resultChan)
+	return common.ReQueryFollow(ctx, func() ([]common.LogMessage, error) {
+		return client.querySubIndex(ctx, client.Index, q)
+	})
 }
 
 func (client *Client) Query(ctx context.Context, q common.Query) <-chan common.LogMessage {
