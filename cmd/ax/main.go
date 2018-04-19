@@ -22,7 +22,9 @@ var (
 	queryCommand    = kingpin.Command("query", "Query logs").Default()
 	alertCommand    = kingpin.Command("alert", "Be alerted when logs match a query")
 	alertDCommand   = kingpin.Command("alertd", "Be alerted when logs match a query")
+	versionCommand  = kingpin.Command("version", "Show the ax version")
 	addAlertCommand = alertCommand.Command("add", "Add new alert")
+	version         = "dev"
 )
 
 func determineClient(em config.EnvMap) common.Client {
@@ -86,6 +88,8 @@ func main() {
 		addAlertMain(rc, client)
 	case "alertd":
 		alertMain(ctx, rc)
+	case "version":
+		println(version)
 	}
 
 }
