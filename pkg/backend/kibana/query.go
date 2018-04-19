@@ -146,35 +146,12 @@ func (client *Client) queryMessages(ctx context.Context, subIndex string, query 
 func (client *Client) queryFollow(ctx context.Context, q common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 	go func() {
-		retries := 0
-		seenMessageIds := make(map[string]bool)
-		for {
-			allMessages, err := client.querySubIndex(ctx, client.Index, q)
-			if err != nil {
-				retries++
-				if retries < 10 {
-					fmt.Fprintf(os.Stderr, "Could not connect to Kibana: %v retrying in 5s\n", err)
-					time.Sleep(5 * time.Second)
-					continue
-				} else {
-					fmt.Fprintf(os.Stderr, "Could not connect to Kibana: %v\nExceeded total number of retries, exiting.\n", err)
-					os.Exit(1)
-				}
-			}
-			// Request succesful, so reset retry count
-			retries = 0
-			for _, message := range allMessages {
-				if _, ok := seenMessageIds[message.ID]; ok {
-					// Already seen this message, skipping
-					continue
-				}
-				seenMessageIds[message.ID] = true
-				resultChan <- message
-			}
-			time.Sleep(5 * time.Second)
-		}
+		common.ReQueryFollow(ctx, resultChan, func() ([]common.LogMessage, error) {
+			return client.querySubIndex(ctx, client.Index, q)
+		})
 	}()
-	return resultChan
+	// Returning resultChan as a Dedup channel
+	return common.Dedup(resultChan)
 }
 
 func (client *Client) Query(ctx context.Context, q common.Query) <-chan common.LogMessage {

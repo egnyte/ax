@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 )
@@ -181,4 +182,66 @@ func MatchesQuery(m LogMessage, q Query) bool {
 		}
 	}
 	return matchFound
+}
+
+func ReQueryFollow(ctx context.Context, resultChan chan LogMessage, queryMessagesFunc func() ([]LogMessage, error)) {
+	retries := 0
+	for {
+		select {
+		case <-ctx.Done():
+			close(resultChan)
+			return
+		default:
+		}
+		allMessages, err := queryMessagesFunc()
+		select {
+		case <-ctx.Done():
+			close(resultChan)
+			return
+		default:
+		}
+		if err != nil {
+			fmt.Println(err)
+			retries++
+			select {
+			case <-ctx.Done():
+				close(resultChan)
+				return
+			default:
+			}
+			if retries < 10 {
+				fmt.Fprintf(os.Stderr, "Could not connect: %v retrying in 5s\n", err)
+				if canceableSleep(ctx, 5*time.Second) {
+					// Canceled
+					close(resultChan)
+					return
+				}
+				continue
+			} else {
+				fmt.Fprintf(os.Stderr, "Could not connect: %v\nExceeded total number of retries, exiting.\n", err)
+				close(resultChan)
+				return
+			}
+		}
+		// Request succesful, so reset retry count
+		retries = 0
+		for _, message := range allMessages {
+			// duplicate handling done by Dedup channel
+			resultChan <- message
+		}
+		if canceableSleep(ctx, 5*time.Second) {
+			close(resultChan)
+			return
+		}
+	}
+}
+
+// Returns if canceled
+func canceableSleep(ctx context.Context, duration time.Duration) bool {
+	select {
+	case <-time.After(duration):
+		return false
+	case <-ctx.Done():
+		return true
+	}
 }
