@@ -6,11 +6,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 )
 
-var TimeFormat = time.RFC3339
+const (
+	TimeFormat        = time.RFC3339
+	FollowPollTime    = 5 * time.Second
+	ConnectionRetries = 10
+)
 
 type Client interface {
 	Query(ctx context.Context, query Query) <-chan LogMessage
@@ -181,4 +186,74 @@ func MatchesQuery(m LogMessage, q Query) bool {
 		}
 	}
 	return matchFound
+}
+
+// This is a simplistic way to implement log "following" (tailing) in a generic way.
+// The idea is to simply execute the fetch log query (implemented by `queryMessagesFunc`) over and over, every `FollowPollTime` seconds,
+// and push the results through the deduplicating result channel returned (deduplication happens based on message ID)
+// This may seem overly inefficient, but due to the eventual-consistency type behavior of many log aggregation systems, logs may not actually
+// arrive in sequence, so requesting new logs based on timestamps won't work reliably.
+func ReQueryFollow(ctx context.Context, queryMessagesFunc func() ([]LogMessage, error)) <-chan LogMessage {
+	resultChan := make(chan LogMessage)
+	go func() {
+		retries := 0
+		for {
+			select {
+			case <-ctx.Done():
+				close(resultChan)
+				return
+			default:
+			}
+			allMessages, err := queryMessagesFunc()
+			select {
+			case <-ctx.Done():
+				close(resultChan)
+				return
+			default:
+			}
+			if err != nil {
+				fmt.Println(err)
+				retries++
+				select {
+				case <-ctx.Done():
+					close(resultChan)
+					return
+				default:
+				}
+				if retries < ConnectionRetries {
+					fmt.Fprintf(os.Stderr, "Could not connect: %v retrying in 5s\n", err)
+					if canceableSleep(ctx, FollowPollTime) {
+						// Canceled
+						close(resultChan)
+						return
+					}
+					continue
+				} else {
+					fmt.Fprintf(os.Stderr, "Could not connect: %v\nExceeded total number of retries, exiting.\n", err)
+					close(resultChan)
+					return
+				}
+			}
+			// Request succesful, so reset retry count
+			retries = 0
+			for _, message := range allMessages {
+				resultChan <- message
+			}
+			if canceableSleep(ctx, FollowPollTime) {
+				close(resultChan)
+				return
+			}
+		}
+	}()
+	return Dedup(resultChan)
+}
+
+// Returns if canceled
+func canceableSleep(ctx context.Context, duration time.Duration) bool {
+	select {
+	case <-time.After(duration):
+		return false
+	case <-ctx.Done():
+		return true
+	}
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/zefhemel/kingpin"
 
+	"github.com/egnyte/ax/pkg/backend/cloudwatch"
 	"github.com/egnyte/ax/pkg/backend/common"
 	"github.com/egnyte/ax/pkg/backend/docker"
 	"github.com/egnyte/ax/pkg/backend/kibana"
@@ -36,6 +37,8 @@ func determineClient(em config.EnvMap) common.Client {
 		client = docker.New(em["pattern"])
 	} else if em["backend"] == "kibana" {
 		client = kibana.New(em["url"], em["auth"], em["index"])
+	} else if em["backend"] == "cloudwatch" {
+		client = cloudwatch.New(em["accesskey"], em["accesssecretkey"], em["region"], em["groupname"])
 	} else if em["backend"] == "subprocess" {
 		client = subprocess.New(strings.Split(em["command"], " "))
 	}
@@ -63,10 +66,9 @@ func main() {
 	rc := config.BuildConfig()
 	client := determineClient(rc.Env)
 
-	ctx := sigtermContextHandler(context.Background())
-
 	switch cmd {
 	case "query":
+		ctx := sigtermContextHandler(context.Background())
 		if client == nil {
 			if len(rc.Config.Environments) == 0 {
 				// Assuming first time use
@@ -87,7 +89,7 @@ func main() {
 	case "alert add":
 		addAlertMain(rc, client)
 	case "alertd":
-		alertMain(ctx, rc)
+		alertMain(context.Background(), rc)
 	case "version":
 		println(version)
 	}
