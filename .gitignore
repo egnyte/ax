@@ -1,2 +1,3 @@
 env.sh
 dist/
+vendor/
