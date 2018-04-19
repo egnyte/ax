@@ -29,6 +29,9 @@ func New(path string) *Cache {
 		err = decoder.Decode(&cache.data)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error decoding: %v\n", err)
+			// Let's recover gracefully
+			cache.data = make(map[string]cacheItem)
+			cache.Flush()
 		}
 	}
 	return cache
