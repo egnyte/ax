@@ -8,6 +8,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/google/go-github/github"
+
 	"github.com/zefhemel/kingpin"
 
 	"github.com/egnyte/ax/pkg/backend/common"
@@ -55,6 +57,16 @@ func sigtermContextHandler(ctx context.Context) context.Context {
 	}()
 
 	return ctx
+}
+
+func getLatestVersion() string {
+	client := github.NewClient(nil)
+	release, _, err := client.Repositories.GetLatestRelease(context.Background(), "egnyte", "ax")
+
+	if err != nil {
+		fmt.Printf("Problem in getting release information %v\n", err)
+	}
+	return release.GetTagName()
 }
 
 func main() {
