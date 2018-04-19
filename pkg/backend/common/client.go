@@ -43,8 +43,9 @@ type QuerySelectors struct {
 }
 
 type LogMessage struct {
-	ID         string                 `json:"id,omitempty"`
-	Timestamp  time.Time              `json:"@timestamp"`
+	ID        string    `json:"id,omitempty"`
+	Timestamp time.Time `json:"@timestamp"`
+	// required: "message" attribute
 	Attributes map[string]interface{} `json:"attributes"`
 }
 
