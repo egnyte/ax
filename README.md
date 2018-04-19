@@ -1,16 +1,18 @@
+# Ax
+
 ![Logo](https://raw.githubusercontent.com/egnyte/ax/master/ax.png)
 
 [![Travis CI status image](https://travis-ci.org/egnyte/ax.svg?branch=master)](https://travis-ci.org/egnyte/ax)
 
-# Ax
 It's a structured logging world we live in, but do we really have to look at JSON logs? Not with Ax.
 
 Ax features:
 
 * Read logs from various sources, currently:
-    * Kibana
-    * Piped input
-    * Docker containers
+  * [Kibana](https://www.elastic.co/products/kibana)
+  * [AWS Cloudwatch Logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
+  * Piped input
+  * Docker containers
 * Filter logs based on attribute (field) values as well as text phrase search
 * Select only the attributes you are interested in
 * The ability to "follow" logs (Ax keeps running and shows new results as they come in)
@@ -48,7 +50,6 @@ This will also put the `ax` binary into your `$GOPATH/bin` so make sure that's i
 To update Ax to the latest and greatest, just rerun the command above.
 
 ## Development
-
 After the above `go get` call, you will have a git checkout of the repo under `$GOPATH/src/github.com/egnyte/ax`. If you want to work on Ax, just fork the repo and update `.git/config` appropriately.
 
 To run tests:
@@ -72,12 +73,12 @@ For zsh, add to `~/.zshrc`:
 
 After this, you can auto complete commands, flags, environments, docker container names and even attribute names by hittig TAB. Use it, love it, never go back.
 
-## Setup with Kibana
-To setup Ax for use with Kibana, run:
+## Setup with Kibana or Cloudwatch
+To setup Ax for use with Kibana or Cloudwatch, run:
 
     ax env add
 
-This will prompt you for a name, backend-type (kibana in this case), URL and if this URL is basic auth protected a username and password, and then an index.
+This will prompt you for a name, backend-type and various other things depending on your backend of choice. After a successful setup, you should be ready to go.
 
 To see if it works, just run:
 
@@ -104,6 +105,7 @@ You can also pipe logs directly into Ax:
     tail -f /var/log/something.log | ax
 
 # Filtering and selecting attributes
+
 Looking at all logs is nice, but it only gets really interesting if you can start to filter stuff and by selecting only certain attributes.
 
 To search for all logs containing the phrase "Traceback":
@@ -125,11 +127,13 @@ If you have a lot of extra attributes in your log messages, you can select just 
     ax --where domain=zef --select message --select tag
 
 # "Tailing" logs
+
 Use the `-f` flag:
 
     ax -f --where domain=zef
 
 # Different output formats
+
 Don't like the default textual output, perhaps you prefer YAML:
 
     ax --output yaml
@@ -144,4 +148,5 @@ or pretty JSON:
     ax query --help
 
 # Found anything broken?
+
 Report it as a Github issue!
