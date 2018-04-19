@@ -2,7 +2,7 @@ package cache
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"os"
 	"time"
 )
@@ -28,7 +28,7 @@ func New(path string) *Cache {
 		decoder := json.NewDecoder(file)
 		err = decoder.Decode(&cache.data)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error decoding: %v\n", err)
+			log.Printf("Error decoding cache: %v\n", err)
 			// Let's recover gracefully
 			cache.data = make(map[string]cacheItem)
 			cache.Flush()
