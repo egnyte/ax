@@ -15,8 +15,6 @@ import (
 )
 
 // TODO
-// - Get rid of panic, handle context properly
-// - Follow support
 // - Date range support
 
 type CloudwatchClient struct {
@@ -63,25 +61,50 @@ func queryToFilterPattern(query common.Query) string {
 	return strings.TrimSpace(filterPattern)
 }
 
+func (client *CloudwatchClient) readLogBatch(ctx context.Context, query common.Query) ([]common.LogMessage, error) {
+	resp, err := client.client.FilterLogEventsWithContext(ctx, &cloudwatchlogs.FilterLogEventsInput{
+		LogGroupName:  aws.String(client.groupName),
+		FilterPattern: aws.String(queryToFilterPattern(query)),
+		Limit:         aws.Int64(int64(query.MaxResults)),
+	})
+	if err != nil {
+		return nil, err
+	}
+	messages := make([]common.LogMessage, 0, 20)
+	for _, message := range resp.Events {
+		messages = append(messages, logEventToMessage(query, message))
+	}
+	return messages, nil
+}
+
 func (client *CloudwatchClient) Query(ctx context.Context, query common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 
 	go func() {
-		resp, err := client.client.FilterLogEventsWithContext(ctx, &cloudwatchlogs.FilterLogEventsInput{
-			LogGroupName:  aws.String(client.groupName),
-			FilterPattern: aws.String(queryToFilterPattern(query)),
-			Limit:         aws.Int64(int64(query.MaxResults)),
-		})
-		if err != nil {
-			panic(err)
+		if query.Follow {
+			common.ReQueryFollow(ctx, resultChan, func() ([]common.LogMessage, error) {
+				return client.readLogBatch(ctx, query)
+			})
+		} else {
+			messages, err := client.readLogBatch(ctx, query)
+			if err != nil {
+				fmt.Printf("Error while fetching logs: %s\n", err)
+				close(resultChan)
+				return
+			}
+			for _, message := range messages {
+				resultChan <- message
+			}
+			close(resultChan)
 		}
-		for _, message := range resp.Events {
-			resultChan <- logEventToMessage(query, message)
-		}
-		close(resultChan)
 	}()
 
-	return resultChan
+	if query.Follow {
+		// Remove duplicates resulting of constant requerying
+		return common.Dedup(resultChan)
+	} else {
+		return resultChan
+	}
 }
 
 func (client *CloudwatchClient) ListGroups() ([]string, error) {
@@ -105,7 +128,8 @@ func New(accessKey, accessSecretKey, region, groupName string) *CloudwatchClient
 	})
 
 	if err != nil {
-		panic(err)
+		fmt.Printf("Could not create AWS Session: %s\n", err)
+		return nil
 	}
 	client := cloudwatchlogs.New(sess)
 
