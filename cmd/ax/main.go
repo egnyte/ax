@@ -64,10 +64,9 @@ func main() {
 	rc := config.BuildConfig()
 	client := determineClient(rc.Env)
 
-	ctx := sigtermContextHandler(context.Background())
-
 	switch cmd {
 	case "query":
+		ctx := sigtermContextHandler(context.Background())
 		if client == nil {
 			if len(rc.Config.Environments) == 0 {
 				// Assuming first time use
@@ -88,7 +87,7 @@ func main() {
 	case "alert add":
 		addAlertMain(rc, client)
 	case "alertd":
-		alertMain(ctx, rc)
+		alertMain(context.Background(), rc)
 	}
 
 }
