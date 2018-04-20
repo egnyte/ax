@@ -132,7 +132,9 @@ func (client *StackdriverClient) readLogBatch(ctx context.Context, query common.
 	}
 	resultCounter := 1
 	for err != iterator.Done && resultCounter <= query.MaxResults {
-		messages = append(messages, entryToLogMessage(entry))
+		msg := entryToLogMessage(entry)
+		msg.Attributes = common.Project(msg.Attributes, query.SelectFields)
+		messages = append(messages, msg)
 		entry, err = it.Next()
 		resultCounter++
 	}
