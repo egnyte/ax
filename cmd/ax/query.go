@@ -93,44 +93,35 @@ func buildEqualityFilters(wheres []string) []common.EqualityFilter {
 
 var membershipFilterRegex = regexp.MustCompile(`([^!=<>]+)\s*:\s*(.*)`)
 
+func populateMembershipFilterMap(clauses []string, member bool, fields map[string]map[bool][]string) {
+	for _, clause := range clauses {
+		matches := membershipFilterRegex.FindAllStringSubmatch(clause, -1)
+		if len(matches) != 1 {
+			if member {
+				fmt.Println("Invalid one-of clause", clause)
+			} else {
+				fmt.Println("Invalid not-one-of clause", clause)
+			}
+			os.Exit(1)
+		}
+		fieldName, value := matches[0][1], matches[0][2]
+		field, ok := fields[fieldName]
+		if !ok {
+			fields[fieldName] = map[bool][]string{
+				member:  {value},
+				!member: {},
+			}
+		} else {
+			field[member] = append(fields[fieldName][member], value)
+		}
+	}
+}
+
 func buildMembershipFilters(oneOfs []string, notOneOfs []string) []common.MembershipFilter {
 	// Build a nested map of field names and their membership constraints
 	fields := make(map[string]map[bool][]string)
-	for _, oneOfClause := range oneOfs {
-		matches := membershipFilterRegex.FindAllStringSubmatch(oneOfClause, -1)
-		if len(matches) != 1 {
-			fmt.Println("Invalid one-of clause", oneOfClause)
-			os.Exit(1)
-		}
-		fieldName, value := matches[0][1], matches[0][2]
-		field, ok := fields[fieldName]
-		if !ok {
-			fields[fieldName] = map[bool][]string{
-				true:  {value},
-				false: {},
-			}
-		} else {
-			field[true] = append(fields[fieldName][true], value)
-		}
-	}
-	for _, notOneOfClause := range notOneOfs {
-		matches := membershipFilterRegex.FindAllStringSubmatch(notOneOfClause, -1)
-		if len(matches) != 1 {
-			fmt.Println("Invalid not-one-of clause", notOneOfClause)
-			os.Exit(1)
-		}
-		fieldName, value := matches[0][1], matches[0][2]
-		field, ok := fields[fieldName]
-		if !ok {
-			fields[fieldName] = map[bool][]string{
-				false: {value},
-				true:  {},
-			}
-		} else {
-			field[false] = append(fields[fieldName][true], value)
-		}
-	}
-	// Create a slice of filters, one per each field name with membership constraints
+	populateMembershipFilterMap(oneOfs, true, fields)
+	populateMembershipFilterMap(notOneOfs, false, fields)
 	filters := make([]common.MembershipFilter, 0, len(fields))
 	for fieldName, m := range fields {
 		filters = append(filters, common.MembershipFilter{
