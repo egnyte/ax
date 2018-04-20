@@ -16,6 +16,8 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+const QueryLogTimeout = 20 * time.Second
+
 type StackdriverClient struct {
 	stackdriverClient *logadmin.Client
 	projectName       string
@@ -116,10 +118,16 @@ func queryToFilter(query common.Query, projectName string, logName string) strin
 }
 
 func (client *StackdriverClient) readLogBatch(ctx context.Context, query common.Query) ([]common.LogMessage, error) {
+	println(queryToFilter(query, client.projectName, client.logName))
+	ctx, cancel := context.WithTimeout(ctx, QueryLogTimeout)
+	defer cancel()
 	it := client.stackdriverClient.Entries(ctx, logadmin.Filter(queryToFilter(query, client.projectName, client.logName)))
 	messages := make([]common.LogMessage, 0, 20)
-
 	entry, err := it.Next()
+	// Somehow, if no results can be found, it.Next() just runs forever, hence the adding a timeout to the context
+	if ctx.Err() == context.DeadlineExceeded {
+		return messages, ctx.Err()
+	}
 	if err != nil && err != iterator.Done {
 		return nil, err
 	}
