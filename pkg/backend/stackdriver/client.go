@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
+	"time"
 
 	"google.golang.org/api/option"
 
@@ -89,25 +91,62 @@ func entryToLogMessage(entry *logging.Entry) common.LogMessage {
 			fmt.Printf("Could not marshall value: %v of type %v", entry.Payload, reflect.TypeOf(entry))
 			break
 		}
-		// fmt.Println("JSON: ", string(buf))
 		message.Attributes = payloadToAttributes(buf)
 	}
 	return message
 }
 
+func queryToFilter(query common.Query, projectName string, logName string) string {
+	pieces := []string{fmt.Sprintf(`logName = "projects/%s/logs/%s"`, projectName, logName)}
+	if query.QueryString != "" {
+		pieces = append(pieces, fmt.Sprintf(`"%s"`, query.QueryString))
+	}
+	for _, filter := range query.Filters {
+		pieces = append(pieces, fmt.Sprintf(`jsonPayload.%s %s "%s"`, filter.FieldName, filter.Operator, filter.Value))
+	}
+	if query.After != nil {
+		pieces = append(pieces, fmt.Sprintf(`timestamp > "%s"`, (*query.After).Format(time.RFC3339)))
+	}
+	if query.Before != nil {
+		pieces = append(pieces, fmt.Sprintf(`timestamp < "%s"`, (*query.Before).Format(time.RFC3339)))
+	}
+	return strings.Join(pieces, " AND ")
+}
+
+func (client *StackdriverClient) readLogBatch(ctx context.Context, query common.Query) ([]common.LogMessage, error) {
+	it := client.stackdriverClient.Entries(ctx, logadmin.Filter(queryToFilter(query, client.projectName, client.logName)))
+	messages := make([]common.LogMessage, 0, 20)
+
+	entry, err := it.Next()
+	if err != nil && err != iterator.Done {
+		return nil, err
+	}
+	resultCounter := 1
+	for err != iterator.Done && resultCounter <= query.MaxResults {
+		messages = append(messages, entryToLogMessage(entry))
+		entry, err = it.Next()
+		resultCounter++
+	}
+	return messages, nil
+}
+
 func (client *StackdriverClient) Query(ctx context.Context, query common.Query) <-chan common.LogMessage {
-	it := client.stackdriverClient.Entries(ctx, logadmin.Filter(fmt.Sprintf(`logName = "projects/%s/logs/%s"`, client.projectName, client.logName)))
+	if query.Follow {
+		return common.ReQueryFollow(ctx, func() ([]common.LogMessage, error) {
+			return client.readLogBatch(ctx, query)
+		})
+	}
 	resultChan := make(chan common.LogMessage)
 
 	go func() {
-		entry, err := it.Next()
-		if err != nil && err != iterator.Done {
-			fmt.Printf("Error retrieving logs: %s\n", err)
+		messages, err := client.readLogBatch(ctx, query)
+		if err != nil {
+			fmt.Printf("Error while fetching logs: %s\n", err)
 			close(resultChan)
+			return
 		}
-		for err != iterator.Done {
-			resultChan <- entryToLogMessage(entry)
-			entry, err = it.Next()
+		for _, message := range messages {
+			resultChan <- message
 		}
 		close(resultChan)
 	}()
@@ -128,9 +167,9 @@ func New(credentialsFile, projectName, logName string) *StackdriverClient {
 	}
 }
 
-func (client *StackdriverClient) ListLogs(ctx context.Context) ([]string, error) {
+func (client *StackdriverClient) ListLogs() ([]string, error) {
 	logNames := make([]string, 0, 10)
-	it := client.stackdriverClient.Logs(ctx)
+	it := client.stackdriverClient.Logs(context.Background())
 	s, err := it.Next()
 	if err != nil && err != iterator.Done {
 		return nil, err

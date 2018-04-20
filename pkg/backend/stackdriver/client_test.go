@@ -3,6 +3,8 @@ package stackdriver
 import (
 	"fmt"
 	"testing"
+
+	"github.com/egnyte/ax/pkg/backend/common"
 )
 
 func TestAttributeDecoding(t *testing.T) {
@@ -28,5 +30,24 @@ func TestAttributeDecoding(t *testing.T) {
 
 	if obj["name"] != "test" {
 		t.Error("obj.name")
+	}
+}
+
+func TestQueryToFilter(t *testing.T) {
+	if queryToFilter(common.Query{}, "my-project", "my-log") != `logName = "projects/my-project/logs/my-log"` {
+		t.Error("Empty search")
+	}
+	if queryToFilter(common.Query{QueryString: "My query"}, "my-project", "my-log") != `logName = "projects/my-project/logs/my-log" AND "My query"` {
+		t.Error("Basic search filter")
+	}
+	if queryToFilter(common.Query{
+		Filters: []common.QueryFilter{
+			{
+				FieldName: "name",
+				Operator:  "=",
+				Value:     "pete",
+			},
+		}}, "my-project", "my-log") != `logName = "projects/my-project/logs/my-log" AND jsonPayload.name = "pete"` {
+		t.Error("Where filter fail")
 	}
 }

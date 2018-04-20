@@ -173,7 +173,7 @@ func AddEnv() {
 	if name == "" {
 		name = "default"
 	}
-	fmt.Print("Choose a backend [kibana,cloudwatch]: ")
+	fmt.Print("Choose a backend (kibana,cloudwatch,stackdriver) [kibana]: ")
 	backend := readLine(reader)
 	if backend == "" {
 		backend = "kibana"
@@ -188,6 +188,11 @@ func AddEnv() {
 		}
 	case "cloudwatch":
 		em, err = cloudwatchConfig(reader, config)
+		if err != nil {
+			return
+		}
+	case "stackdriver":
+		em, err = stackdriverConfig(reader, config)
 		if err != nil {
 			return
 		}
