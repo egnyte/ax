@@ -26,31 +26,31 @@ type StackdriverClient struct {
 
 // This is some crazy-ass structure in which the stackdriver APIs
 // return its JSON values that we have to decode
-type payLoadValue struct {
-	Fields map[string]payLoadEntry
+type payloadValue struct {
+	Fields map[string]payloadEntry
 }
 
-type payLoadEntry struct {
+type payloadEntry struct {
 	Kind struct {
 		StringValue *string
 		NumberValue *int64
 		BoolValue   *bool
 		ListValue   *struct {
-			Values []payLoadEntry
+			Values []payloadEntry
 		}
-		StructValue *payLoadValue
+		StructValue *payloadValue
 	}
 }
 
-func payLoadValueToJSONValue(plVal payLoadValue) map[string]interface{} {
+func payloadValueToJSONValue(plVal payloadValue) map[string]interface{} {
 	m := make(map[string]interface{})
 	for k, v := range plVal.Fields {
-		m[k] = payLoadEntryToJSONValue(v)
+		m[k] = payloadEntryToJSONValue(v)
 	}
 	return m
 }
 
-func payLoadEntryToJSONValue(plEntry payLoadEntry) interface{} {
+func payloadEntryToJSONValue(plEntry payloadEntry) interface{} {
 	kind := plEntry.Kind
 	if kind.StringValue != nil {
 		return *plEntry.Kind.StringValue
@@ -61,23 +61,23 @@ func payLoadEntryToJSONValue(plEntry payLoadEntry) interface{} {
 	} else if kind.ListValue != nil {
 		list := make([]interface{}, len((*kind.ListValue).Values))
 		for idx, val := range (*kind.ListValue).Values {
-			list[idx] = payLoadEntryToJSONValue(val)
+			list[idx] = payloadEntryToJSONValue(val)
 		}
 		return list
 	} else if kind.StructValue != nil {
-		return payLoadValueToJSONValue(*kind.StructValue)
+		return payloadValueToJSONValue(*kind.StructValue)
 	} else {
 		return nil
 	}
 }
 
 func payloadToAttributes(buf []byte) map[string]interface{} {
-	var plValue payLoadValue
+	var plValue payloadValue
 	if err := json.Unmarshal(buf, &plValue); err != nil {
 		fmt.Printf("Could not unmarshall value: %s", string(buf))
 		return nil
 	}
-	return payLoadValueToJSONValue(plValue)
+	return payloadValueToJSONValue(plValue)
 }
 
 func entryToLogMessage(entry *logging.Entry) common.LogMessage {
