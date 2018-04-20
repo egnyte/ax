@@ -11,6 +11,7 @@ Ax features:
 * Read logs from various sources, currently:
   * [Kibana](https://www.elastic.co/products/kibana)
   * [AWS Cloudwatch Logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
+  * [GCP Stackdriver Logs](https://cloud.google.com/logging/)
   * Piped input
   * Docker containers
 * Filter logs based on attribute (field) values as well as text phrase search
@@ -77,8 +78,8 @@ For zsh, add to `~/.zshrc`:
 
 After this, you can auto complete commands, flags, environments, docker container names and even attribute names by hittig TAB. Use it, love it, never go back.
 
-## Setup with Kibana or Cloudwatch
-To setup Ax for use with Kibana or Cloudwatch, run:
+## Setup with Kibana, Cloudwatch or Stackdriver
+To setup Ax for use with Kibana, Cloudwatch or Stackdriver, run:
 
     ax env add
 
