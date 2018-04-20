@@ -82,7 +82,7 @@ func LoadConfig() Config {
 	if config.Alerts == nil {
 		config.Alerts = make([]AlertConfig, 0)
 	}
-	if err := mergo.Merge(&config.Colors, DefaultColorConfig); err != nil {
+	if err := mergo.Merge(&config.Colors, defaultColorConfig); err != nil {
 		panic("Could not set default colors")
 	}
 	return config

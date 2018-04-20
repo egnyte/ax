@@ -2,7 +2,7 @@ package config
 
 import "github.com/fatih/color"
 
-type ColorDef struct {
+type colorDef struct {
 	Fg        string
 	Bg        string
 	Bold      bool
@@ -12,20 +12,20 @@ type ColorDef struct {
 }
 
 type ColorConfig struct {
-	Timestamp      ColorDef
-	AttributeKey   ColorDef
-	AttributeValue ColorDef
-	Message        ColorDef
+	Timestamp      colorDef
+	AttributeKey   colorDef
+	AttributeValue colorDef
+	Message        colorDef
 }
 
-var DefaultColorConfig ColorConfig = ColorConfig{
-	Timestamp: ColorDef{
+var defaultColorConfig ColorConfig = ColorConfig{
+	Timestamp: colorDef{
 		Fg: "magenta",
 	},
-	Message: ColorDef{
+	Message: colorDef{
 		Bold: true,
 	},
-	AttributeKey: ColorDef{
+	AttributeKey: colorDef{
 		Fg: "cyan",
 	},
 }
@@ -57,7 +57,7 @@ func colorStringToAttribute(s string, fg bool) color.Attribute {
 	return color.Reset
 }
 
-func ColorToTermColor(colorDef ColorDef) *color.Color {
+func ColorToTermColor(colorDef colorDef) *color.Color {
 	c := color.New()
 
 	if colorDef.Fg != "" {
