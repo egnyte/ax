@@ -42,16 +42,16 @@
   version = "1.6.0"
 
 [[constraint]]
+  name = "github.com/imdario/mergo"
+  version = "0.3.4"
+
+[[constraint]]
   branch = "master"
   name = "github.com/olekukonko/tablewriter"
 
 [[constraint]]
   name = "github.com/zefhemel/kingpin"
   version = "2.2.5"
-
-[[constraint]]
-  name = "github.com/zefhemel/termui"
-  version = "2.2.0"
 
 [[constraint]]
   branch = "master"
