@@ -23,9 +23,9 @@ var (
 	alertCommand    = kingpin.Command("alert", "Be alerted when logs match a query")
 	alertDCommand   = kingpin.Command("alertd", "Be alerted when logs match a query")
 	versionCommand  = kingpin.Command("version", "Show the ax version")
-	upgrade         = kingpin.Command("upgrade", "Verify if there is a new version available")
+	upgrade         = kingpin.Command("upgrade", "Upgrade Ax if a new version is available")
 	addAlertCommand = alertCommand.Command("add", "Add new alert")
-	version         = "v0.3.0"
+	version         = "dev"
 )
 
 func determineClient(em config.EnvMap) common.Client {
