@@ -21,21 +21,34 @@ type Client interface {
 	Query(ctx context.Context, query Query) <-chan LogMessage
 }
 
-type QueryFilter struct {
+type EqualityFilter struct {
 	FieldName string
 	Operator  string
 	Value     string
 }
 
+type ExistenceFilter struct {
+	FieldName string
+	Exists    bool // true if FieldName should exist in the message, false if FieldName should *not* exist
+
+}
+type MembershipFilter struct {
+	FieldName     string
+	ValidValues   []string
+	InvalidValues []string
+}
+
 type Query struct {
-	QueryString  string
-	After        *time.Time
-	Before       *time.Time
-	SelectFields []string
-	Filters      []QueryFilter
-	MaxResults   int
-	Unique       bool
-	Follow       bool
+	QueryString       string
+	After             *time.Time
+	Before            *time.Time
+	SelectFields      []string
+	EqualityFilters   []EqualityFilter
+	ExistenceFilters  []ExistenceFilter
+	MembershipFilters []MembershipFilter
+	MaxResults        int
+	Unique            bool
+	Follow            bool
 }
 
 type QuerySelectors struct {
@@ -43,6 +56,10 @@ type QuerySelectors struct {
 	After       string   `yaml:"after,omitempty"`
 	Select      []string `yaml:"select,omitempty"`
 	Where       []string `yaml:"where,omitempty"`
+	OneOf       []string `yaml:"one_of,omitempty"`
+	NotOneOf    []string `yaml:"not_one_of,omitempty"`
+	Exists      []string `yaml:"exists,omitempty"`
+	NotExists   []string `yaml:"not_exists,omitempty"`
 	Unique      bool     `yaml:"unique,omitempty"`
 	QueryString []string `yaml:"query,omitempty"`
 }
@@ -54,7 +71,7 @@ type LogMessage struct {
 	Attributes map[string]interface{} `json:"attributes"`
 }
 
-// Performs a shallow copy of the Attributes map and adds fields for '@id' and '@timestamp'
+// Map performs a shallow copy of the Attributes map and adds fields for '@id' and '@timestamp'
 func (lm LogMessage) Map() map[string]interface{} {
 	out := make(map[string]interface{})
 	for k, v := range lm.Attributes {
@@ -141,7 +158,7 @@ func Project(m map[string]interface{}, fields []string) map[string]interface{} {
 	return projected
 }
 
-func (f QueryFilter) Matches(m LogMessage) bool {
+func (f EqualityFilter) Matches(m LogMessage) bool {
 	val, ok := m.Attributes[f.FieldName]
 	switch f.Operator {
 	case "=":
@@ -152,6 +169,36 @@ func (f QueryFilter) Matches(m LogMessage) bool {
 		fmt.Printf("Not supported operatior: %s\n", f.Operator)
 		return false
 	}
+}
+
+// Matches indicates whether the existence filter matches the log message
+func (f ExistenceFilter) Matches(m LogMessage) bool {
+	_, ok := m.Attributes[f.FieldName]
+	// true if we expect the field and it exists, or if we don't expect it and it doesn't exist
+	return (f.Exists && ok) || (!f.Exists && !ok)
+}
+
+func isStringInSlice(needle string, haystack []string) bool {
+	for _, s := range haystack {
+		if s == needle {
+			return true
+		}
+	}
+	return false
+}
+
+// Matches indicates whether the log message satisfies membership constraints
+func (f MembershipFilter) Matches(m LogMessage) bool {
+	valueInterface, ok := m.Attributes[f.FieldName]
+	if !ok {
+		if len(f.ValidValues) > 0 {
+			return false
+		}
+		return true
+	}
+	valueAsString := fmt.Sprintf("%v", valueInterface)
+	// Only perform membeship checks if for the respective kind of contraint if any constraint is specified
+	return (len(f.ValidValues) == 0 || isStringInSlice(valueAsString, f.ValidValues)) && (len(f.InvalidValues) == 0 || !isStringInSlice(valueAsString, f.InvalidValues))
 }
 
 func matchesPhrase(s, phrase string) bool {
@@ -180,7 +227,17 @@ func MatchesQuery(m LogMessage, q Query) bool {
 			return false
 		}
 	}
-	for _, f := range q.Filters {
+	for _, f := range q.EqualityFilters {
+		if !f.Matches(m) {
+			return false
+		}
+	}
+	for _, f := range q.MembershipFilters {
+		if !f.Matches(m) {
+			return false
+		}
+	}
+	for _, f := range q.ExistenceFilters {
 		if !f.Matches(m) {
 			return false
 		}
