@@ -1,5 +1,4 @@
 all:
-	dep ensure
 	go install github.com/egnyte/ax/cmd/ax
 
 test:

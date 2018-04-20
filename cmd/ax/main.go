@@ -14,6 +14,7 @@ import (
 	"github.com/egnyte/ax/pkg/backend/common"
 	"github.com/egnyte/ax/pkg/backend/docker"
 	"github.com/egnyte/ax/pkg/backend/kibana"
+	"github.com/egnyte/ax/pkg/backend/stackdriver"
 	"github.com/egnyte/ax/pkg/backend/stream"
 	"github.com/egnyte/ax/pkg/backend/subprocess"
 	"github.com/egnyte/ax/pkg/config"
@@ -33,14 +34,19 @@ func determineClient(em config.EnvMap) common.Client {
 	var client common.Client
 	if (stat.Mode() & os.ModeCharDevice) == 0 {
 		client = stream.New(os.Stdin)
-	} else if em["backend"] == "docker" {
-		client = docker.New(em["pattern"])
-	} else if em["backend"] == "kibana" {
-		client = kibana.New(em["url"], em["auth"], em["index"])
-	} else if em["backend"] == "cloudwatch" {
-		client = cloudwatch.New(em["accesskey"], em["accesssecretkey"], em["region"], em["groupname"])
-	} else if em["backend"] == "subprocess" {
-		client = subprocess.New(strings.Split(em["command"], " "))
+	} else {
+		switch em["backend"] {
+		case "docker":
+			client = docker.New(em["pattern"])
+		case "kibana":
+			client = kibana.New(em["url"], em["auth"], em["index"])
+		case "cloudwatch":
+			client = cloudwatch.New(em["accesskey"], em["accesssecretkey"], em["region"], em["groupname"])
+		case "stackdriver":
+			client = stackdriver.New(em["credentials"], em["project"], em["log"])
+		case "subprocess":
+			client = subprocess.New(strings.Split(em["command"], " "))
+		}
 	}
 	return client
 }
