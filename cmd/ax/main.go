@@ -8,8 +8,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/google/go-github/github"
-
 	"github.com/zefhemel/kingpin"
 
 	"github.com/egnyte/ax/pkg/backend/common"
@@ -25,6 +23,7 @@ var (
 	alertCommand    = kingpin.Command("alert", "Be alerted when logs match a query")
 	alertDCommand   = kingpin.Command("alertd", "Be alerted when logs match a query")
 	versionCommand  = kingpin.Command("version", "Show the ax version")
+	upgrade         = kingpin.Command("upgrade", "Verify if there is a new version available")
 	addAlertCommand = alertCommand.Command("add", "Add new alert")
 	version         = "dev"
 )
@@ -57,16 +56,6 @@ func sigtermContextHandler(ctx context.Context) context.Context {
 	}()
 
 	return ctx
-}
-
-func getLatestVersion() string {
-	client := github.NewClient(nil)
-	release, _, err := client.Repositories.GetLatestRelease(context.Background(), "egnyte", "ax")
-
-	if err != nil {
-		fmt.Printf("Problem in getting release information %v\n", err)
-	}
-	return release.GetTagName()
 }
 
 func main() {
@@ -102,6 +91,12 @@ func main() {
 		alertMain(ctx, rc)
 	case "version":
 		println(version)
+	case "upgrade":
+		err := upgradeVersion()
+		if err != nil {
+			fmt.Println("Upgrade failed")
+		} else {
+			fmt.Println("Upgrade has been completed successfully.")
+		}
 	}
-
 }

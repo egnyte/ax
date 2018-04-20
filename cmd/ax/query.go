@@ -45,7 +45,7 @@ func init() {
 func whereHintAction() []string {
 	rc := config.BuildConfig()
 	resultList := make([]string, 0, 20)
-	for attrName, _ := range complete.GetCompletions(rc) {
+	for attrName := range complete.GetCompletions(rc) {
 		resultList = append(resultList, fmt.Sprintf("%s=", attrName))
 	}
 	return resultList
@@ -54,7 +54,7 @@ func whereHintAction() []string {
 func selectHintAction() []string {
 	rc := config.BuildConfig()
 	resultList := make([]string, 0, 20)
-	for attrName, _ := range complete.GetCompletions(rc) {
+	for attrName := range complete.GetCompletions(rc) {
 		resultList = append(resultList, attrName)
 	}
 	return resultList
