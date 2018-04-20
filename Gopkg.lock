@@ -128,18 +128,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/mitchellh/go-wordwrap"
-  packages = ["."]
-  revision = "ad45545899c7b13c020ea92b2072220eefad42b8"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/nsf/termbox-go"
-  packages = ["."]
-  revision = "7cbfaac9e282b3ea0cefeddc67b2c3ed3aaf97bc"
-
-[[projects]]
-  branch = "master"
   name = "github.com/olekukonko/tablewriter"
   packages = ["."]
   revision = "d5dd8a50526aadb3d5f2c9b5233277bc2db90e88"
