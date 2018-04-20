@@ -22,6 +22,8 @@ type StackdriverClient struct {
 	logName           string
 }
 
+// This is some crazy-ass structure in which the stackdriver APIs
+// return its JSON values that we have to decode
 type payLoadValue struct {
 	Fields map[string]payLoadEntry
 }
