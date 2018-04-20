@@ -23,7 +23,7 @@ var DefaultColorConfig ColorConfig = ColorConfig{
 		Fg: "magenta",
 	},
 	Message: ColorDef{
-		Bold: false,
+		Bold: true,
 	},
 	AttributeKey: ColorDef{
 		Fg: "cyan",
