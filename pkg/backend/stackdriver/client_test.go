@@ -41,7 +41,7 @@ func TestQueryToFilter(t *testing.T) {
 		t.Error("Basic search filter")
 	}
 	if queryToFilter(common.Query{
-		Filters: []common.QueryFilter{
+		EqualityFilters: []common.EqualityFilter{
 			{
 				FieldName: "name",
 				Operator:  "=",
