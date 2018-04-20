@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/google/go-github/github"
-	"github.com/kardianos/osext"
 )
 
 func getLatestReleaseData() *github.RepositoryRelease {
@@ -63,8 +62,7 @@ func downloadFile(filepath string, url string) error {
 	}
 	defer resp.Body.Close()
 
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
+	if _, err = io.Copy(out, resp.Body); err != nil {
 		return err
 	}
 
@@ -90,8 +88,7 @@ func upgradeVersion() error {
 
 			fmt.Println("Ax upgrade in progress...")
 
-			err := downloadFile(downloadPath, latestAssetURL)
-			if err != nil {
+			if err := downloadFile(downloadPath, latestAssetURL); err != nil {
 				return err
 			}
 
@@ -102,17 +99,15 @@ func upgradeVersion() error {
 			defer os.Remove(downloadPath)
 
 			// extract the tar.gz file
-			err = extractTar(extractionPath, file)
-			if err != nil {
+			if err := extractTar(extractionPath, file); err != nil {
 				return err
 			}
 
 			// switch old binary with a new one
-			currentBinaryPath, _ := osext.Executable()
-			err = os.Rename(extractionPath+"ax", currentBinaryPath)
-			if err != nil {
-				return err
-			}
+			// currentBinaryPath, _ := osext.Executable()
+			// if err := os.Rename(extractionPath+"ax", currentBinaryPath); err != nil {
+			// 	return err
+			// }
 			defer os.RemoveAll(extractionPath)
 		} else {
 			fmt.Println("Aborting the upgrade.")

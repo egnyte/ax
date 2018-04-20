@@ -25,7 +25,7 @@ var (
 	versionCommand  = kingpin.Command("version", "Show the ax version")
 	upgrade         = kingpin.Command("upgrade", "Verify if there is a new version available")
 	addAlertCommand = alertCommand.Command("add", "Add new alert")
-	version         = "dev"
+	version         = "v0.3.0"
 )
 
 func determineClient(em config.EnvMap) common.Client {
@@ -92,8 +92,7 @@ func main() {
 	case "version":
 		println(version)
 	case "upgrade":
-		err := upgradeVersion()
-		if err != nil {
+		if err := upgradeVersion(); err != nil {
 			fmt.Println("Upgrade failed.")
 		} else {
 			fmt.Println("Upgrade has been completed successfully.")
