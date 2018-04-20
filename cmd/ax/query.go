@@ -188,6 +188,11 @@ func querySelectorsToQuery(flags *common.QuerySelectors) common.Query {
 
 func queryMain(ctx context.Context, rc config.RuntimeConfig, client common.Client) {
 	query := querySelectorsToQuery(queryFlags)
+	if !client.ImplementsAdvancedFilters() && (len(query.ExistenceFilters) > 0 || len(query.MembershipFilters) > 0) {
+		fmt.Println("This backend does not support advanded filters (yet!)")
+		os.Exit(1)
+	}
+
 	query.MaxResults = queryFlagMaxResults
 	query.Follow = queryFlagFollow
 	seenBeforeHash := make(map[string]bool)

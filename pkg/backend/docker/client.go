@@ -32,6 +32,10 @@ func DockerHintAction() []string {
 	return GetRunningContainers("")
 }
 
+func (client *DockerClient) ImplementsAdvancedFilters() bool {
+	return true
+}
+
 func (client *DockerClient) Query(ctx context.Context, query common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 	runningCommands := 0

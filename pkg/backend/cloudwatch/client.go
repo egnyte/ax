@@ -58,6 +58,10 @@ func queryToFilterPattern(query common.Query) string {
 	return strings.TrimSpace(filterPattern)
 }
 
+func (client *CloudwatchClient) ImplementsAdvancedFilters() bool {
+	return false
+}
+
 func (client *CloudwatchClient) readLogBatch(ctx context.Context, query common.Query) ([]common.LogMessage, error) {
 	var startTime, endTime *int64 = nil, nil
 	if query.After != nil {

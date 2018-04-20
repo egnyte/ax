@@ -19,6 +19,7 @@ const (
 
 type Client interface {
 	Query(ctx context.Context, query Query) <-chan LogMessage
+	ImplementsAdvancedFilters() bool
 }
 
 type EqualityFilter struct {

@@ -117,6 +117,10 @@ func queryToFilter(query common.Query, projectName string, logName string) strin
 	return strings.Join(pieces, " AND ")
 }
 
+func (client *StackdriverClient) ImplementsAdvancedFilters() bool {
+	return false
+}
+
 func (client *StackdriverClient) readLogBatch(ctx context.Context, query common.Query) ([]common.LogMessage, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryLogTimeout)
 	defer cancel()
