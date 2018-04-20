@@ -17,15 +17,15 @@ func stackdriverConfig(reader *bufio.Reader, existingConfig Config) (EnvMap, err
 	em := EnvMap{
 		"backend": "stackdriver",
 	}
-	existingSdEnv := findFirstEnvWhere(existingConfig.Environments, func(em EnvMap) bool {
+	existingSDEnv := findFirstEnvWhere(existingConfig.Environments, func(em EnvMap) bool {
 		return em["backend"] == "stackdriver"
 	})
-	if existingSdEnv != nil {
-		credentialsPath := (*existingSdEnv)["credentials"]
+	if existingSDEnv != nil {
+		credentialsPath := (*existingSDEnv)["credentials"]
 		fmt.Printf("Path to credentials file (JSON) [%s]: ", credentialsPath)
 		em["credentials"] = readLine(reader)
 		if em["credentials"] == "" {
-			em["credentials"] = (*existingSdEnv)["credentials"]
+			em["credentials"] = (*existingSDEnv)["credentials"]
 		}
 	} else {
 		fmt.Print("Path to credentials file (JSON): ")
