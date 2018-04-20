@@ -94,7 +94,7 @@ func main() {
 	case "upgrade":
 		err := upgradeVersion()
 		if err != nil {
-			fmt.Println("Upgrade failed")
+			fmt.Println("Upgrade failed.")
 		} else {
 			fmt.Println("Upgrade has been completed successfully.")
 		}

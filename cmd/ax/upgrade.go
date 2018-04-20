@@ -73,7 +73,7 @@ func downloadFile(filepath string, url string) error {
 
 func upgradeVersion() error {
 	if latestVersion := getLatestReleaseTag(); version != latestVersion {
-		fmt.Printf("New version detected. Current version: %s. Latest version: %s", version, latestVersion)
+		fmt.Printf("New version detected. Current version: %s. Latest version: %s\n", version, latestVersion)
 		inputScanner := bufio.NewScanner(os.Stdin)
 		fmt.Print("Do you want to upgrade an Ax to its latest version? (yes/no): ")
 		inputScanner.Scan()
@@ -81,8 +81,8 @@ func upgradeVersion() error {
 
 		if strings.ToLower(text) == "yes" || strings.ToLower(text) == "y" {
 			latestAssetURL := getLatestAssetLink()
-			downloadPath := "/tmp/egnyte/ax/ax.tar.gz"
-			extractionPath := "/tmp/egnyte/ax/"
+			downloadPath := "/tmp/egnyte_ax/ax.tar.gz"
+			extractionPath := "/tmp/egnyte_ax/"
 
 			if _, err := os.Stat(extractionPath); os.IsNotExist(err) {
 				os.Mkdir(extractionPath, 0755)
