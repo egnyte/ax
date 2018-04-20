@@ -118,7 +118,6 @@ func queryToFilter(query common.Query, projectName string, logName string) strin
 }
 
 func (client *StackdriverClient) readLogBatch(ctx context.Context, query common.Query) ([]common.LogMessage, error) {
-	println(queryToFilter(query, client.projectName, client.logName))
 	ctx, cancel := context.WithTimeout(ctx, QueryLogTimeout)
 	defer cancel()
 	it := client.stackdriverClient.Entries(ctx, logadmin.Filter(queryToFilter(query, client.projectName, client.logName)))
