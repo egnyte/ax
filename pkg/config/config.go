@@ -13,6 +13,7 @@ import (
 
 	"golang.org/x/crypto/ssh/terminal"
 
+	"github.com/imdario/mergo"
 	"github.com/zefhemel/kingpin"
 	yaml "gopkg.in/yaml.v2"
 
@@ -27,6 +28,7 @@ type EnvMap map[string]string
 
 type Config struct {
 	DefaultEnv   string            `yaml:"default"`
+	Colors       ColorConfig       `yaml:"colors"`
 	Environments map[string]EnvMap `yaml:"env"`
 	Alerts       []AlertConfig     `yaml:"alerts"`
 }
@@ -79,6 +81,9 @@ func LoadConfig() Config {
 	}
 	if config.Alerts == nil {
 		config.Alerts = make([]AlertConfig, 0)
+	}
+	if err := mergo.Merge(&config.Colors, DefaultColorConfig); err != nil {
+		panic("Could not set default colors")
 	}
 	return config
 }
