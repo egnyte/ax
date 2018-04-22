@@ -103,11 +103,7 @@ func (alerter *SlackAlerter) SendAlert(lm common.LogMessage) error {
 	expire := time.Now().Add(time.Hour * 24 * 7)
 	alerter.seenCache.Set(contentHash, resp.Ts, &expire)
 
-	err = alerter.seenCache.Flush()
-	if err != nil {
-		return err
-	}
-	return nil
+	return alerter.seenCache.Flush()
 }
 
 var _ alert.Alerter = &SlackAlerter{}
