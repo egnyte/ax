@@ -91,11 +91,11 @@ func Test_buildExistenceFilters(t *testing.T) {
 				notExists: []string{"bar"},
 			},
 			want: []common.ExistenceFilter{
-				common.ExistenceFilter{
+				{
 					FieldName: "foo",
 					Exists:    true,
 				},
-				common.ExistenceFilter{
+				{
 					FieldName: "bar",
 					Exists:    false,
 				},

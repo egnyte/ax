@@ -17,95 +17,95 @@ func TestFilter(t *testing.T) {
 	lastHour := time.Now().Add(-time.Hour)
 	nextHour := time.Now().Add(time.Hour)
 	shouldMatchQueries := []Query{
-		Query{
+		{
 			EqualityFilters: []EqualityFilter{
-				EqualityFilter{FieldName: "someStr", Value: "Zef", Operator: "="},
+				{FieldName: "someStr", Value: "Zef", Operator: "="},
 			},
 		},
-		Query{
+		{
 			EqualityFilters: []EqualityFilter{
-				EqualityFilter{FieldName: "someN", Value: "34", Operator: "="},
+				{FieldName: "someN", Value: "34", Operator: "="},
 			},
 		},
-		Query{
+		{
 			QueryString: "zef",
 			EqualityFilters: []EqualityFilter{
-				EqualityFilter{FieldName: "someN", Value: "34", Operator: "="},
+				{FieldName: "someN", Value: "34", Operator: "="},
 			},
 		},
-		Query{
+		{
 			QueryString: "zef",
 			EqualityFilters: []EqualityFilter{
-				EqualityFilter{FieldName: "someN", Value: "34", Operator: "="},
+				{FieldName: "someN", Value: "34", Operator: "="},
 			},
 			Before: &nextHour,
 			After:  &lastHour,
 		},
-		Query{
+		{
 			EqualityFilters: []EqualityFilter{
-				EqualityFilter{FieldName: "someN", Value: "32", Operator: "!="},
+				{FieldName: "someN", Value: "32", Operator: "!="},
 			},
 		},
-		Query{
+		{
 			EqualityFilters: []EqualityFilter{
-				EqualityFilter{FieldName: "someNonexistingField", Value: "Pete", Operator: "!="},
+				{FieldName: "someNonexistingField", Value: "Pete", Operator: "!="},
 			},
 		},
-		Query{
+		{
 			ExistenceFilters: []ExistenceFilter{
-				ExistenceFilter{
+				{
 					FieldName: "message",
 					Exists:    true,
 				},
 			},
 		},
-		Query{
+		{
 			ExistenceFilters: []ExistenceFilter{
-				ExistenceFilter{
+				{
 					FieldName: "message",
 					Exists:    true,
 				},
-				ExistenceFilter{
+				{
 					FieldName: "someStr",
 					Exists:    true,
 				},
 			},
 		},
-		Query{
+		{
 			ExistenceFilters: []ExistenceFilter{
-				ExistenceFilter{
+				{
 					FieldName: "message",
 					Exists:    true,
 				},
-				ExistenceFilter{
+				{
 					FieldName: "someStr",
 					Exists:    true,
 				},
-				ExistenceFilter{
+				{
 					FieldName: "bar",
 					Exists:    false,
 				},
 			},
 		},
-		Query{
+		{
 			MembershipFilters: []MembershipFilter{
-				MembershipFilter{
+				{
 					FieldName:   "message",
 					ValidValues: []string{"Sup", "bar"},
 				},
 			},
 		},
-		Query{
+		{
 			MembershipFilters: []MembershipFilter{
-				MembershipFilter{
+				{
 					FieldName:     "message",
 					InvalidValues: []string{"foo", "bar"},
 				},
 			},
 		},
-		Query{
+		{
 			MembershipFilters: []MembershipFilter{
-				MembershipFilter{
+				{
 					FieldName:   "someN",
 					ValidValues: []string{"Sup", "34"},
 				},
@@ -113,55 +113,55 @@ func TestFilter(t *testing.T) {
 		},
 	}
 	shouldNotMatchQueries := []Query{
-		Query{
+		{
 			EqualityFilters: []EqualityFilter{
-				EqualityFilter{FieldName: "someStr", Value: "Pete", Operator: "="},
+				{FieldName: "someStr", Value: "Pete", Operator: "="},
 			},
 		},
-		Query{
+		{
 			QueryString: "bla",
 			EqualityFilters: []EqualityFilter{
-				EqualityFilter{FieldName: "someStr", Value: "Pete", Operator: "="},
+				{FieldName: "someStr", Value: "Pete", Operator: "="},
 			},
 		},
-		Query{
+		{
 			After: &nextHour,
 		},
-		Query{
+		{
 			ExistenceFilters: []ExistenceFilter{
-				ExistenceFilter{
+				{
 					FieldName: "message",
 					Exists:    true,
 				},
-				ExistenceFilter{
+				{
 					FieldName: "someStr",
 					Exists:    false,
 				},
-				ExistenceFilter{
+				{
 					FieldName: "bar",
 					Exists:    false,
 				},
 			},
 		},
-		Query{
+		{
 			ExistenceFilters: []ExistenceFilter{
-				ExistenceFilter{
+				{
 					FieldName: "bar",
 					Exists:    true,
 				},
 			},
 		},
-		Query{
+		{
 			MembershipFilters: []MembershipFilter{
-				MembershipFilter{
+				{
 					FieldName:   "someN",
 					ValidValues: []string{"45", "bar"},
 				},
 			},
 		},
-		Query{
+		{
 			MembershipFilters: []MembershipFilter{
-				MembershipFilter{
+				{
 					FieldName:     "someN",
 					InvalidValues: []string{"34"},
 				},
