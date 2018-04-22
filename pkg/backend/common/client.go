@@ -192,10 +192,7 @@ func isStringInSlice(needle string, haystack []string) bool {
 func (f MembershipFilter) Matches(m LogMessage) bool {
 	valueInterface, ok := m.Attributes[f.FieldName]
 	if !ok {
-		if len(f.ValidValues) > 0 {
-			return false
-		}
-		return true
+		return len(f.ValidValues) > 0
 	}
 	valueAsString := fmt.Sprintf("%v", valueInterface)
 	// Only perform membeship checks if for the respective kind of contraint if any constraint is specified
