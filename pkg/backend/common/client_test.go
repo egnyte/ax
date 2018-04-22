@@ -17,54 +17,54 @@ func TestFilter(t *testing.T) {
 	lastHour := time.Now().Add(-time.Hour)
 	nextHour := time.Now().Add(time.Hour)
 	shouldMatchQueries := []Query{
-		Query{
+		{
 			Filters: []QueryFilter{
-				QueryFilter{FieldName: "someStr", Value: "Zef", Operator: "="},
+				{FieldName: "someStr", Value: "Zef", Operator: "="},
 			},
 		},
-		Query{
+		{
 			Filters: []QueryFilter{
-				QueryFilter{FieldName: "someN", Value: "34", Operator: "="},
+				{FieldName: "someN", Value: "34", Operator: "="},
 			},
 		},
-		Query{
+		{
 			QueryString: "zef",
 			Filters: []QueryFilter{
-				QueryFilter{FieldName: "someN", Value: "34", Operator: "="},
+				{FieldName: "someN", Value: "34", Operator: "="},
 			},
 		},
-		Query{
+		{
 			QueryString: "zef",
 			Filters: []QueryFilter{
-				QueryFilter{FieldName: "someN", Value: "34", Operator: "="},
+				{FieldName: "someN", Value: "34", Operator: "="},
 			},
 			Before: &nextHour,
 			After:  &lastHour,
 		},
-		Query{
+		{
 			Filters: []QueryFilter{
-				QueryFilter{FieldName: "someN", Value: "32", Operator: "!="},
+				{FieldName: "someN", Value: "32", Operator: "!="},
 			},
 		},
-		Query{
+		{
 			Filters: []QueryFilter{
-				QueryFilter{FieldName: "someNonexistingField", Value: "Pete", Operator: "!="},
+				{FieldName: "someNonexistingField", Value: "Pete", Operator: "!="},
 			},
 		},
 	}
 	shouldNotMatchQueries := []Query{
-		Query{
+		{
 			Filters: []QueryFilter{
-				QueryFilter{FieldName: "someStr", Value: "Pete", Operator: "="},
+				{FieldName: "someStr", Value: "Pete", Operator: "="},
 			},
 		},
-		Query{
+		{
 			QueryString: "bla",
 			Filters: []QueryFilter{
-				QueryFilter{FieldName: "someStr", Value: "Pete", Operator: "="},
+				{FieldName: "someStr", Value: "Pete", Operator: "="},
 			},
 		},
-		Query{
+		{
 			After: &nextHour,
 		},
 	}
