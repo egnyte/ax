@@ -73,3 +73,40 @@ func Test_buildMembershipFilters(t *testing.T) {
 		})
 	}
 }
+
+func Test_buildExistenceFilters(t *testing.T) {
+	type args struct {
+		exists    []string
+		notExists []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []common.ExistenceFilter
+	}{
+		{
+			name: "Simple test",
+			args: args{
+				exists:    []string{"foo"},
+				notExists: []string{"bar"},
+			},
+			want: []common.ExistenceFilter{
+				common.ExistenceFilter{
+					FieldName: "foo",
+					Exists:    true,
+				},
+				common.ExistenceFilter{
+					FieldName: "bar",
+					Exists:    false,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := buildExistenceFilters(tt.args.exists, tt.args.notExists); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("buildExistenceFilters() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
