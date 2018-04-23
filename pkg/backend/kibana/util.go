@@ -26,7 +26,6 @@ func safeFilename(name string) string {
 	return re.ReplaceAllString(name, "_")
 }
 
-
 func unixMillis(t time.Time) int64 {
 	return t.Unix() * 1000
 }

@@ -7,12 +7,6 @@ import (
 	"github.com/egnyte/ax/pkg/backend/stackdriver"
 )
 
-func testStackdriver(em EnvMap) bool {
-	cwClient := stackdriver.New(em["credentials"], em["project"], em["log"])
-	_, err := cwClient.ListLogs()
-	return err != nil
-}
-
 func stackdriverConfig(reader *bufio.Reader, existingConfig Config) (EnvMap, error) {
 	em := EnvMap{
 		"backend": "stackdriver",
@@ -36,15 +30,12 @@ func stackdriverConfig(reader *bufio.Reader, existingConfig Config) (EnvMap, err
 	var sdClient *stackdriver.StackdriverClient
 	var logs []string
 	var err error
-	for {
-		fmt.Println("Attempting to connect to Stackdriver")
-		sdClient = stackdriver.New(em["credentials"], em["project"], "")
-		logs, err = sdClient.ListLogs()
-		if err != nil {
-			fmt.Printf("Got error connecting to Stackdriver: %s\n", err)
-			return em, err
-		}
-		break
+	fmt.Println("Attempting to connect to Stackdriver")
+	sdClient = stackdriver.New(em["credentials"], em["project"], "")
+	logs, err = sdClient.ListLogs()
+	if err != nil {
+		fmt.Printf("Got error connecting to Stackdriver: %s\n", err)
+		return em, err
 	}
 	fmt.Println("List of logs:")
 	for _, log := range logs {

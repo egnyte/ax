@@ -20,10 +20,6 @@ func init() {
 	addAlertCommand.Flag("name", "Name for alert").Required().StringVar(&alertFlagName)
 }
 
-func setupDest() alert.Alerter {
-	return nil
-}
-
 func addAlertMain(rc config.RuntimeConfig, client common.Client) {
 	alertConfig := config.AlertConfig{
 		Env:      rc.ActiveEnv,
