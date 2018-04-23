@@ -196,7 +196,7 @@ func (f MembershipFilter) Matches(m LogMessage) bool {
 		return len(f.ValidValues) == 0
 	}
 	valueAsString := fmt.Sprintf("%v", valueInterface)
-	// Only perform membership checks for the respective kind of contraint if any constraint is specified
+	// Only perform membership checks for the respective kind (inclusive, exclusive) of constraint if any constraint is specified
 	return (len(f.ValidValues) == 0 || isStringInSlice(valueAsString, f.ValidValues)) && (len(f.InvalidValues) == 0 || !isStringInSlice(valueAsString, f.InvalidValues))
 }
 
