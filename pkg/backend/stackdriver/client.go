@@ -105,7 +105,7 @@ func queryToFilter(query common.Query, projectName string, logName string) strin
 	if query.QueryString != "" {
 		pieces = append(pieces, fmt.Sprintf(`"%s"`, query.QueryString))
 	}
-	for _, filter := range query.Filters {
+	for _, filter := range query.EqualityFilters {
 		pieces = append(pieces, fmt.Sprintf(`jsonPayload.%s %s "%s"`, filter.FieldName, filter.Operator, filter.Value))
 	}
 	if query.After != nil {
@@ -115,6 +115,10 @@ func queryToFilter(query common.Query, projectName string, logName string) strin
 		pieces = append(pieces, fmt.Sprintf(`timestamp < "%s"`, (*query.Before).Format(time.RFC3339)))
 	}
 	return strings.Join(pieces, " AND ")
+}
+
+func (client *StackdriverClient) ImplementsAdvancedFilters() bool {
+	return false
 }
 
 func (client *StackdriverClient) readLogBatch(ctx context.Context, query common.Query) ([]common.LogMessage, error) {

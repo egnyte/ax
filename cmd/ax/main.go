@@ -28,6 +28,7 @@ var (
 	upgrade         = kingpin.Command("upgrade", "Upgrade Ax if a new version is available")
 	addAlertCommand = alertCommand.Command("add", "Add new alert")
 	version         = "dev"
+	versionFlag     = kingpin.Version(version)
 )
 
 func determineClient(em config.EnvMap) common.Client {

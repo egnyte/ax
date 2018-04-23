@@ -69,7 +69,7 @@ func (client *Client) queryMessages(ctx context.Context, subIndex string, query 
 		mustFilters = append(mustFilters, rangeObj)
 	}
 	mustNotFilters := JsonList{}
-	for _, filter := range query.Filters {
+	for _, filter := range query.EqualityFilters {
 		m := JsonObject{}
 		switch filter.Operator {
 		case "=":

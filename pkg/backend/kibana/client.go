@@ -23,6 +23,10 @@ func New(url, authHeader, index string) *Client {
 	}
 }
 
+func (client *Client) ImplementsAdvancedFilters() bool {
+	return false
+}
+
 func (client *Client) addHeaders(req *http.Request) {
 	req.Header.Set("Authorization", client.AuthHeader)
 	// TODO: This may seem crazy but this header needs to be set, even if empty

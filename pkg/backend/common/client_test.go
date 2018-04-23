@@ -18,54 +18,154 @@ func TestFilter(t *testing.T) {
 	nextHour := time.Now().Add(time.Hour)
 	shouldMatchQueries := []Query{
 		{
-			Filters: []QueryFilter{
+			EqualityFilters: []EqualityFilter{
 				{FieldName: "someStr", Value: "Zef", Operator: "="},
 			},
 		},
 		{
-			Filters: []QueryFilter{
+			EqualityFilters: []EqualityFilter{
 				{FieldName: "someN", Value: "34", Operator: "="},
 			},
 		},
 		{
 			QueryString: "zef",
-			Filters: []QueryFilter{
+			EqualityFilters: []EqualityFilter{
 				{FieldName: "someN", Value: "34", Operator: "="},
 			},
 		},
 		{
 			QueryString: "zef",
-			Filters: []QueryFilter{
+			EqualityFilters: []EqualityFilter{
 				{FieldName: "someN", Value: "34", Operator: "="},
 			},
 			Before: &nextHour,
 			After:  &lastHour,
 		},
 		{
-			Filters: []QueryFilter{
+			EqualityFilters: []EqualityFilter{
 				{FieldName: "someN", Value: "32", Operator: "!="},
 			},
 		},
 		{
-			Filters: []QueryFilter{
+			EqualityFilters: []EqualityFilter{
 				{FieldName: "someNonexistingField", Value: "Pete", Operator: "!="},
+			},
+		},
+		{
+			ExistenceFilters: []ExistenceFilter{
+				{
+					FieldName: "message",
+					Exists:    true,
+				},
+			},
+		},
+		{
+			ExistenceFilters: []ExistenceFilter{
+				{
+					FieldName: "message",
+					Exists:    true,
+				},
+				{
+					FieldName: "someStr",
+					Exists:    true,
+				},
+			},
+		},
+		{
+			ExistenceFilters: []ExistenceFilter{
+				{
+					FieldName: "message",
+					Exists:    true,
+				},
+				{
+					FieldName: "someStr",
+					Exists:    true,
+				},
+				{
+					FieldName: "bar",
+					Exists:    false,
+				},
+			},
+		},
+		{
+			MembershipFilters: []MembershipFilter{
+				{
+					FieldName:   "message",
+					ValidValues: []string{"Sup", "bar"},
+				},
+			},
+		},
+		{
+			MembershipFilters: []MembershipFilter{
+				{
+					FieldName:     "message",
+					InvalidValues: []string{"foo", "bar"},
+				},
+			},
+		},
+		{
+			MembershipFilters: []MembershipFilter{
+				{
+					FieldName:   "someN",
+					ValidValues: []string{"Sup", "34"},
+				},
 			},
 		},
 	}
 	shouldNotMatchQueries := []Query{
 		{
-			Filters: []QueryFilter{
+			EqualityFilters: []EqualityFilter{
 				{FieldName: "someStr", Value: "Pete", Operator: "="},
 			},
 		},
 		{
 			QueryString: "bla",
-			Filters: []QueryFilter{
+			EqualityFilters: []EqualityFilter{
 				{FieldName: "someStr", Value: "Pete", Operator: "="},
 			},
 		},
 		{
 			After: &nextHour,
+		},
+		{
+			ExistenceFilters: []ExistenceFilter{
+				{
+					FieldName: "message",
+					Exists:    true,
+				},
+				{
+					FieldName: "someStr",
+					Exists:    false,
+				},
+				{
+					FieldName: "bar",
+					Exists:    false,
+				},
+			},
+		},
+		{
+			ExistenceFilters: []ExistenceFilter{
+				{
+					FieldName: "bar",
+					Exists:    true,
+				},
+			},
+		},
+		{
+			MembershipFilters: []MembershipFilter{
+				{
+					FieldName:   "someN",
+					ValidValues: []string{"45", "bar"},
+				},
+			},
+		},
+		{
+			MembershipFilters: []MembershipFilter{
+				{
+					FieldName:     "someN",
+					InvalidValues: []string{"34"},
+				},
+			},
 		},
 	}
 	for i, shouldMatch := range shouldMatchQueries {

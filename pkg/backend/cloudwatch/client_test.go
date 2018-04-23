@@ -24,7 +24,7 @@ func TestParsing(t *testing.T) {
 func TestFilterGenerator(t *testing.T) {
 	output := queryToFilterPattern(common.Query{
 		QueryString: "Test",
-		Filters: []common.QueryFilter{
+		EqualityFilters: []common.EqualityFilter{
 			{
 				FieldName: "name",
 				Operator:  "=",
@@ -37,7 +37,7 @@ func TestFilterGenerator(t *testing.T) {
 	}
 
 	output = queryToFilterPattern(common.Query{
-		Filters: []common.QueryFilter{
+		EqualityFilters: []common.EqualityFilter{
 			{
 				FieldName: "name",
 				Operator:  "=",
@@ -50,7 +50,7 @@ func TestFilterGenerator(t *testing.T) {
 	}
 
 	output = queryToFilterPattern(common.Query{
-		Filters: []common.QueryFilter{
+		EqualityFilters: []common.EqualityFilter{
 			{
 				FieldName: "name",
 				Operator:  "=",

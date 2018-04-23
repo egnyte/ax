@@ -14,6 +14,10 @@ type SubprocessClient struct {
 	command []string
 }
 
+func (client *SubprocessClient) ImplementsAdvancedFilters() bool {
+	return true
+}
+
 func (client *SubprocessClient) Query(ctx context.Context, query common.Query) <-chan common.LogMessage {
 	resultChan := make(chan common.LogMessage)
 	cmd := exec.Command(client.command[0], client.command[1:]...)

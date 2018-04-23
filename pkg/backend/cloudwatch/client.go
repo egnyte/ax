@@ -45,17 +45,21 @@ func logEventToMessage(query common.Query, logEvent *cloudwatchlogs.FilteredLogE
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
 func queryToFilterPattern(query common.Query) string {
 	filterParts := make([]string, 0)
-	for _, filter := range query.Filters {
+	for _, filter := range query.EqualityFilters {
 		filterParts = append(filterParts, fmt.Sprintf("($.%s %s \"%s\")", filter.FieldName, filter.Operator, filter.Value))
 	}
 	var filterPattern string
-	if len(query.Filters) == 0 {
+	if len(query.EqualityFilters) == 0 {
 		filterPattern = query.QueryString
 	} else {
 		filterPattern = fmt.Sprintf("%s { %s }", query.QueryString, strings.Join(filterParts, " && "))
 	}
 
 	return strings.TrimSpace(filterPattern)
+}
+
+func (client *CloudwatchClient) ImplementsAdvancedFilters() bool {
+	return false
 }
 
 func (client *CloudwatchClient) readLogBatch(ctx context.Context, query common.Query) ([]common.LogMessage, error) {
