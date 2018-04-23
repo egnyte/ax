@@ -147,6 +147,31 @@ or pretty JSON:
 
     ax --output pretty-json
 
+# Customizing colors for "text" output
+
+In your `~/.config/ax/ax.yaml` file (`ax env edit`) you can override the default colors as follows:
+
+    colors:
+        timestamp:
+            fg: magenta
+        message:
+            bold: true
+        attributekey:
+            faint: true
+            fg: green
+        attributevalue:
+            faint: true
+            fg: blue
+
+For each "color" you can set:
+
+* `fg` — foreground color (`red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`)
+* `bg` — background color (same options)
+* `bold` — bold font (`true` or `false`)
+* `italic` — italic font (`true` or `false`)
+* `underline` — underline font (`true` or `false`)
+* `faint` — faint (color) font (`true` or `false`)
+
 # Getting help
 
     ax --help

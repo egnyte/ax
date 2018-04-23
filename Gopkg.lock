@@ -67,8 +67,8 @@
     "service/cloudwatchlogs",
     "service/sts"
   ]
-  revision = "63f395001dd8f8d48ef82aad68256167e4051652"
-  version = "v1.13.33"
+  revision = "3e7014382cdc91695381614d0110a3cff997ba72"
+  version = "v1.13.34"
 
 [[projects]]
   name = "github.com/fatih/color"
@@ -79,8 +79,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "ace140f73450505f33e8b8418216792275ae82a7"
-  version = "v1.35.0"
+  revision = "6529cf7c58879c08d927016dde4477f18a0634cb"
+  version = "v1.36.0"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -98,15 +98,39 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/google/go-github"
+  packages = ["github"]
+  revision = "e48060a28fac52d0f1cb758bc8b87c07bac4a87d"
+  version = "v15.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/google/go-querystring"
+  packages = ["query"]
+  revision = "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
+
+[[projects]]
   name = "github.com/googleapis/gax-go"
   packages = ["."]
   revision = "317e0006254c44a0ac427cc52a0e083ff0b9622f"
   version = "v2.0.0"
 
 [[projects]]
+  name = "github.com/imdario/mergo"
+  packages = ["."]
+  revision = "9d5f1277e9a8ed20c3684bda8fde67c05628518c"
+  version = "v0.3.4"
+
+[[projects]]
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
   revision = "0b12d6b5"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/kardianos/osext"
+  packages = ["."]
+  revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
   name = "github.com/mattn/go-colorable"
@@ -162,7 +186,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "d6449816ce06963d9d136eee5a56fca5b0616e7e"
+  revision = "e73bf333ef8920dbb52ad18d4bd38ad9d9bc76d7"
 
 [[projects]]
   branch = "master"
@@ -178,7 +202,7 @@
     "lex/httplex",
     "trace"
   ]
-  revision = "d41e8174641f662c5a2d1c7a5f9e828788eb8706"
+  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
 
 [[projects]]
   branch = "master"
@@ -205,7 +229,7 @@
     "unix",
     "windows"
   ]
-  revision = "a2a45943ae67364d56c5d7d62dee78cff16c8dc8"
+  revision = "79b0c6888797020a994db17c8510466c72fe75d9"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -320,6 +344,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9f76dbf8babc04c1d4e50f79ee82dc0df7405100818fa68e2329ed7f7f8e5440"
+  inputs-digest = "08b796f57aba1df99aafda9bfad3b796beb93f8941c3350f10e7f22d7b453b93"
   solver-name = "gps-cdcl"
   solver-version = 1

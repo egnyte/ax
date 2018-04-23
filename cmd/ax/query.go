@@ -13,7 +13,6 @@ import (
 	"github.com/egnyte/ax/pkg/backend/common"
 	"github.com/egnyte/ax/pkg/complete"
 	"github.com/egnyte/ax/pkg/config"
-	"github.com/fatih/color"
 	"github.com/zefhemel/kingpin"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -204,25 +203,28 @@ func queryMain(ctx context.Context, rc config.RuntimeConfig, client common.Clien
 			}
 			seenBeforeHash[contentHash] = true
 		}
-		printMessage(message, queryFlagOutputFormat)
+		printMessage(message, queryFlagOutputFormat, rc.Config.Colors)
 	}
 
 }
 
-func printMessage(message common.LogMessage, queryOutputFormat string) {
+func printMessage(message common.LogMessage, queryOutputFormat string, colorConfig config.ColorConfig) {
 	switch queryOutputFormat {
 	case "text":
 		ts := message.Timestamp.Format(common.TimeFormat)
-		fmt.Printf("[%s] ", color.MagentaString(ts))
+		timestampColor := config.ColorToTermColor(colorConfig.Timestamp)
+		fmt.Printf("%s ", timestampColor.Sprintf("[%s]", ts))
 		if msg, ok := message.Attributes["message"].(string); ok {
-			messageColor := color.New(color.Bold)
+			messageColor := config.ColorToTermColor(colorConfig.Message)
 			fmt.Printf("%s ", messageColor.Sprint(msg))
 		}
+		attributeKeyColor := config.ColorToTermColor(colorConfig.AttributeKey)
+		attributeValueColor := config.ColorToTermColor(colorConfig.AttributeValue)
 		for key, value := range message.Attributes {
 			if key == "message" || value == nil {
 				continue
 			}
-			fmt.Printf("%s=%+v ", color.CyanString(key), value)
+			fmt.Printf("%s%s ", attributeKeyColor.Sprintf("%s=", key), attributeValueColor.Sprintf("%+v", value))
 		}
 		fmt.Println()
 	case "json":

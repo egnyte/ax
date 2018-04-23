@@ -35,11 +35,23 @@
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
-  version = "1.13.33"
+  version = "1.13.34"
 
 [[constraint]]
   name = "github.com/fatih/color"
   version = "1.6.0"
+
+[[constraint]]
+  name = "github.com/google/go-github"
+  version = "15.0.0"
+
+[[constraint]]
+  name = "github.com/imdario/mergo"
+  version = "0.3.4"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/kardianos/osext"
 
 [[constraint]]
   branch = "master"
@@ -48,10 +60,6 @@
 [[constraint]]
   name = "github.com/zefhemel/kingpin"
   version = "2.2.5"
-
-[[constraint]]
-  name = "github.com/zefhemel/termui"
-  version = "2.2.0"
 
 [[constraint]]
   branch = "master"

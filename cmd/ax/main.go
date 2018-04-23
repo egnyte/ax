@@ -25,6 +25,7 @@ var (
 	alertCommand    = kingpin.Command("alert", "Be alerted when logs match a query")
 	alertDCommand   = kingpin.Command("alertd", "Be alerted when logs match a query")
 	versionCommand  = kingpin.Command("version", "Show the ax version")
+	upgrade         = kingpin.Command("upgrade", "Upgrade Ax if a new version is available")
 	addAlertCommand = alertCommand.Command("add", "Add new alert")
 	version         = "dev"
 	versionFlag     = kingpin.Version(version)
@@ -99,6 +100,11 @@ func main() {
 		alertMain(context.Background(), rc)
 	case "version":
 		println(version)
+	case "upgrade":
+		if err := upgradeVersion(); err != nil {
+			fmt.Println("Upgrade failed.")
+		} else {
+			fmt.Println("Upgrade has been completed successfully.")
+		}
 	}
-
 }
