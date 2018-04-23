@@ -5,7 +5,7 @@ test:
 	go test ./cmd/... ./pkg/...
 
 deps:
-	go get ./cmd/... ./pkg/...
+	dep ensure
 
 release:
 	rm -rf dist bin
