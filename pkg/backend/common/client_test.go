@@ -210,3 +210,62 @@ func TestFlatten(t *testing.T) {
 		t.Error("Didn't match")
 	}
 }
+
+func TestMembershipFilter_Matches(t *testing.T) {
+	type fields struct {
+		FieldName     string
+		ValidValues   []string
+		InvalidValues []string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		m      LogMessage
+		want   bool
+	}{
+		{
+			name: "Enforce field existence for inclusive member filters",
+			fields: fields{
+				FieldName: "domain",
+				ValidValues: []string{
+					"ax",
+				},
+				InvalidValues: []string{},
+			},
+			m: LogMessage{
+				Attributes: map[string]interface{}{
+					"not-domain": "foo",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "Don't enforce field existence for exclusive-only filter",
+			fields: fields{
+				FieldName:   "domain",
+				ValidValues: []string{},
+				InvalidValues: []string{
+					"ax",
+				},
+			},
+			m: LogMessage{
+				Attributes: map[string]interface{}{
+					"not-domain": "foo",
+				},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := MembershipFilter{
+				FieldName:     tt.fields.FieldName,
+				ValidValues:   tt.fields.ValidValues,
+				InvalidValues: tt.fields.InvalidValues,
+			}
+			if got := f.Matches(tt.m); got != tt.want {
+				t.Errorf("MembershipFilter.Matches() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

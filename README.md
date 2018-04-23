@@ -133,6 +133,26 @@ If you have a lot of extra attributes in your log messages, you can select just 
 
     ax --where domain=zef --select message --select tag
 
+# Advanced filtering
+
+Ax also allows you to filter by the existence of a field in a message, or to test field values for membership in a set of values.
+
+To search for all logs with a `domain` field:
+
+    ax --where-exists domain
+
+Or for all logs without a traceback field:
+
+    ax --where-not-exists traceback
+
+To search for messages from a subset of domains:
+
+    ax --where-on-of domain:zef --where-one-of domain:fredek
+
+To search for all messages *except* ones from specific domains:
+    ax --where-not-on-of domain:boring --where-not-one-of domain:dull
+
+**NOTE** Advanced filtering is currently only implemented for the stream and Docker backends. Attempting to use them with other backend will raise an error.
 # "Tailing" logs
 
 Use the `-f` flag:

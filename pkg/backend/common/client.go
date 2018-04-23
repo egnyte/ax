@@ -191,11 +191,12 @@ func isStringInSlice(needle string, haystack []string) bool {
 // Matches indicates whether the log message satisfies membership constraints
 func (f MembershipFilter) Matches(m LogMessage) bool {
 	valueInterface, ok := m.Attributes[f.FieldName]
+	// If value is missing, only match if no members are expected
 	if !ok {
-		return len(f.ValidValues) > 0
+		return len(f.ValidValues) == 0
 	}
 	valueAsString := fmt.Sprintf("%v", valueInterface)
-	// Only perform membeship checks if for the respective kind of contraint if any constraint is specified
+	// Only perform membership checks for the respective kind (inclusive, exclusive) of constraint if any constraint is specified
 	return (len(f.ValidValues) == 0 || isStringInSlice(valueAsString, f.ValidValues)) && (len(f.InvalidValues) == 0 || !isStringInSlice(valueAsString, f.InvalidValues))
 }
 
