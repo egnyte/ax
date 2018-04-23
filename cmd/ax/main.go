@@ -59,10 +59,13 @@ func sigtermContextHandler(ctx context.Context) context.Context {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		<-c
-		fmt.Println("Canceled through SIGTERM (Ctrl-c)")
+		switch <-c {
+		case os.Interrupt:
+			fmt.Println("Canceled through SIGINT (Ctrl-C)")
+		case syscall.SIGTERM:
+			fmt.Println("Canceled through SIGTERM")
+		}
 		cancel()
-		// os.Exit(1) -- commented out, implicitly exiting after context cancelation cascaded
 	}()
 
 	return ctx
