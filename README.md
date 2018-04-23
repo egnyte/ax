@@ -39,7 +39,9 @@ to install in the current directory.
 
 If you don't trust piping random shell scripts from the internet into a shell, feel free to download the `install.sh` script first, inspect it, then run it through bash manually or, simply go through the [Ax releases](https://github.com/egnyte/ax/releases) page and download the tarball of your choice.
 
-Upgrades can be installed by simply re-running the above command.
+Upgrade using:
+
+    ax upgrade
 
 ### Bleeding edge with Go-tools
 For now there's no pre-built binaries, so to run this you need a reasonably recent version of Go, then download it into your GOPATH:
