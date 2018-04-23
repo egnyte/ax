@@ -2,10 +2,26 @@ package main
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/egnyte/ax/pkg/backend/common"
 )
+
+func sortMembershipFilters(slice []common.MembershipFilter) []common.MembershipFilter {
+	sort.SliceStable(slice, func(i, j int) bool {
+		a, b := slice[i], slice[j]
+
+		// Sort internal strings so that equivalent filters are equal
+		sort.Strings(a.InvalidValues)
+		sort.Strings(b.InvalidValues)
+		sort.Strings(a.ValidValues)
+		sort.Strings(b.InvalidValues)
+
+		return sort.StringsAreSorted([]string{a.FieldName, b.FieldName})
+	})
+	return slice
+}
 
 func Test_buildMembershipFilters(t *testing.T) {
 	type args struct {
@@ -67,7 +83,7 @@ func Test_buildMembershipFilters(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := buildMembershipFilters(tt.args.oneOfs, tt.args.notOneOfs); !reflect.DeepEqual(got, tt.want) {
+			if got := buildMembershipFilters(tt.args.oneOfs, tt.args.notOneOfs); !reflect.DeepEqual(sortMembershipFilters(got), sortMembershipFilters(tt.want)) {
 				t.Errorf("buildMembershipFilters() = %v, want %v", got, tt.want)
 			}
 		})
