@@ -34,13 +34,13 @@ func TestParseTimestampUnix(t *testing.T) {
 	}
 	// Extreme outside of range
 	common.MustJsonDecode(`"1568849"`, &i)
-	ts, err = ParseTimestamp(i)
+	_, err = ParseTimestamp(i)
 	if err == nil {
 		t.Error("Should not be accepted")
 	}
 	// Extreme outside of range
 	common.MustJsonDecode(`"1568849000000000000"`, &i)
-	ts, err = ParseTimestamp(i)
+	_, err = ParseTimestamp(i)
 	if err == nil {
 		t.Error("Should not be accepted")
 	}

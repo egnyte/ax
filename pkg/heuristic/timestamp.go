@@ -11,10 +11,6 @@ import (
 	"github.com/egnyte/ax/pkg/backend/common"
 )
 
-const bottomEpochBarrier = 100000000
-const topSecondEpochBarrier = 10000000000
-const topMsEpochBarrier = 3000000000000
-
 var ErrorCouldNotParse = errors.New("Could not parse timestamp")
 
 type TimestampParser func(interface{}) *time.Time

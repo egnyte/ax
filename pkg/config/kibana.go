@@ -7,12 +7,6 @@ import (
 	"github.com/egnyte/ax/pkg/backend/kibana"
 )
 
-func testKibana(em EnvMap) bool {
-	kibanaClient := kibana.New(em["url"], em["auth"], "")
-	_, err := kibanaClient.ListIndices()
-	return err != nil
-}
-
 func kibanaConfig(reader *bufio.Reader, existingConfig Config) (EnvMap, error) {
 	em := EnvMap{
 		"backend": "kibana",

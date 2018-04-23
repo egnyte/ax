@@ -215,7 +215,7 @@ func AddEnv() {
 func envHintAction() []string {
 	config := LoadConfig()
 	results := make([]string, 0, len(config.Environments))
-	for k, _ := range config.Environments {
+	for k := range config.Environments {
 		results = append(results, k)
 	}
 	return results

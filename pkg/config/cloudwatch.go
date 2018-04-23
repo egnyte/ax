@@ -7,12 +7,6 @@ import (
 	"github.com/egnyte/ax/pkg/backend/cloudwatch"
 )
 
-func testCloudWatch(em EnvMap) bool {
-	cwClient := cloudwatch.New(em["accesskey"], em["accesssecretkey"], em["region"], "")
-	_, err := cwClient.ListGroups()
-	return err != nil
-}
-
 func cloudwatchConfig(reader *bufio.Reader, existingConfig Config) (EnvMap, error) {
 	em := EnvMap{
 		"backend": "cloudwatch",
@@ -37,15 +31,12 @@ func cloudwatchConfig(reader *bufio.Reader, existingConfig Config) (EnvMap, erro
 	var cwClient *cloudwatch.CloudwatchClient
 	var groups []string
 	var err error
-	for {
-		fmt.Println("Attempting to connect to Cloudwatch")
-		cwClient = cloudwatch.New(em["accesskey"], em["accesssecretkey"], em["region"], "")
-		groups, err = cwClient.ListGroups()
-		if err != nil {
-			fmt.Printf("Got error connecting to Cloudwatch: %s\n", err)
-			return em, err
-		}
-		break
+	fmt.Println("Attempting to connect to Cloudwatch")
+	cwClient = cloudwatch.New(em["accesskey"], em["accesssecretkey"], em["region"], "")
+	groups, err = cwClient.ListGroups()
+	if err != nil {
+		fmt.Printf("Got error connecting to Cloudwatch: %s\n", err)
+		return em, err
 	}
 	fmt.Println("List of groups:")
 	for _, group := range groups {

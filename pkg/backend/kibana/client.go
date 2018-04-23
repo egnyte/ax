@@ -43,10 +43,6 @@ type indexList struct {
 	} `json:"saved_objects"`
 }
 
-type indexListHit struct {
-	Id string `json:"_id"`
-}
-
 func (client *Client) ListIndices() ([]string, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/saved_objects/?type=index-pattern&per_page=10000", client.URL), nil)
 	if err != nil {

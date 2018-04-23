@@ -21,7 +21,7 @@ func GatherCompletionInfo(rc config.RuntimeConfig, messages <-chan common.LogMes
 	// This will be read back as a map[string]interface{} not a bool
 	if existingAttributes, ok := cache.Get(completionsKey).(map[string]interface{}); ok {
 		log.Println("Found existing attribute cache")
-		for existingAttr, _ := range existingAttributes {
+		for existingAttr := range existingAttributes {
 			attrNames[existingAttr] = true
 		}
 	}
@@ -31,7 +31,7 @@ func GatherCompletionInfo(rc config.RuntimeConfig, messages <-chan common.LogMes
 	go func() {
 		for message := range messages {
 			resultChan <- message
-			for k, _ := range message.Attributes {
+			for k := range message.Attributes {
 				if !attrNames[k] {
 					attrNames[k] = true
 					changed = true
@@ -73,7 +73,7 @@ func GetCompletions(rc config.RuntimeConfig) map[string]bool {
 	res := cache.Get(fmt.Sprintf("completions:%s", rc.ActiveEnv))
 	result := make(map[string]bool)
 	if attrNames, ok := res.(map[string]interface{}); ok {
-		for attrName, _ := range attrNames {
+		for attrName := range attrNames {
 			result[attrName] = true
 		}
 	}
