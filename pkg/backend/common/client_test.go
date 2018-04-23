@@ -239,6 +239,22 @@ func TestMembershipFilter_Matches(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			name: "Don't enforce field existence for exclusive-only filter",
+			fields: fields{
+				FieldName:   "domain",
+				ValidValues: []string{},
+				InvalidValues: []string{
+					"ax",
+				},
+			},
+			m: LogMessage{
+				Attributes: map[string]interface{}{
+					"not-domain": "foo",
+				},
+			},
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
