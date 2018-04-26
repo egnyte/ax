@@ -16,7 +16,9 @@ var (
 )
 
 const (
+	// That's right... bash embedded in Go!
 	bashCompletion = `
+# Extracts --env and -e flags from the command to use it for better code completion results
 __ax_parse_env_flag()
 {
 	local envflag
