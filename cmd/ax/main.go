@@ -20,60 +20,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	bashCompletion = `
-__ax_parse_env_flag()
-{
-	local envflag
-	envflag=$(echo "${words[@]}" | sed -E 's/.*(--env[= ]+|-e +)([A-Za-z_-]+).*/\2/')
-	if [[ $envflag = *" "* ]]; then
-	    __ax_debug "No env found"
-	    envflag=""
-    else
-		__ax_debug "Env: ${envflag}"
-	fi
-	echo ${envflag}
-}
-
-__ax_get_envs()
-{
-	local output
-	if output=$(ax complete env 2>/dev/null); then
-		COMPREPLY=( $(compgen -W "${output[*]}" -- "$cur") )
-    fi
-}
-
-__ax_get_attrs_where()
-{
-	__ax_get_attrs_with_suffix "="
-}
-
-__ax_get_attrs_where2()
-{
-	__ax_get_attrs_with_suffix ":"
-}
-
-__ax_get_attrs_select()
-{
-	__ax_get_attrs_with_suffix ""
-}
-
-
-__ax_get_attrs_with_suffix()
-{
-	local output envflag suffix
-	suffix=$1
-	envflag=$(__ax_parse_env_flag)
-	if output=$(ax complete attrs ${envflag} --suffix=${suffix} 2>/dev/null); then
-		__ax_debug "Completion results: ${output[*]}"
-		COMPREPLY=( $(compgen -W "${output[*]}" -- "$cur") )
-    fi
-}
-`
-)
-
 var (
-	version = "dev"
+	version        = "dev"
+	defaultEnvFlag string
+	dockerFlag     string
+	bashScriptFlag bool
+	rootCmd        = &cobra.Command{
+		Use:   "ax [SEARCH PHRASE]",
+		Short: "Ax is a structured log query tool",
+		BashCompletionFunction: bashCompletion,
+		Args: cobra.ArbitraryArgs,
+	}
+	versionCommand = &cobra.Command{
+		Use:   "version",
+		Short: "Check the version of Ax you are running",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println(version)
+		},
+	}
 )
 
 func determineClient(em config.EnvMap) common.Client {
@@ -116,68 +80,19 @@ func sigtermContextHandler(ctx context.Context) context.Context {
 	return ctx
 }
 
-var rootCmd = &cobra.Command{
-	Use:   "ax",
-	Short: "Ax is a structured log query tool",
-	BashCompletionFunction: bashCompletion,
-	Args: cobra.MinimumNArgs(0),
-}
-
-var (
-	defaultEnvFlag string
-	dockerFlag     string
-	bashScriptFlag bool
-)
-
-func init() {
+func main() {
 	// Global flags
 	persistentFlags := rootCmd.PersistentFlags()
-	persistentFlags.StringVar(&defaultEnvFlag, "env", "", "Default environment to use")
+	persistentFlags.StringVar(&defaultEnvFlag, "env", "", "Environment to use")
 	persistentFlags.Lookup("env").Annotations = map[string][]string{cobra.BashCompCustom: {"__ax_get_envs"}}
-	persistentFlags.StringVar(&dockerFlag, "docker", "", "Docker container prefix")
-	persistentFlags.BoolVar(&bashScriptFlag, "completion-script-bash", false, "Generate bash script")
+	persistentFlags.StringVar(&dockerFlag, "docker", "", "Query docker containers with a certain prefix, use * to query all")
+	addCompletionFunc(persistentFlags, "docker", "__ax_get_containers")
 
-	// Commands
-	rootCmd.AddCommand(&cobra.Command{
-		Use: "version",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(version)
-		},
-	})
+	// Bash script generation
+	// TODO: Add back zsh support
+	rootCmd.Flags().BoolVar(&bashScriptFlag, "completion-script-bash", false, "Generate bash script")
 
-	rootCmd.AddCommand(config.EnvCommand())
-	rootCmd.AddCommand(completionCommand)
-}
-
-func main() {
+	// Add all commands
+	rootCmd.AddCommand(config.EnvCommand(), completionCommand, upgradeCommand, alertCommand, alertDCommand, versionCommand)
 	rootCmd.Execute()
-}
-
-func oldMain() {
-	rc := config.BuildConfig("", "")
-	client := determineClient(rc.Env)
-
-	cmd := "legacy"
-
-	switch cmd {
-	case "query":
-	case "env add":
-		config.AddEnv()
-	case "env list":
-		config.ListEnvs()
-	case "env edit":
-		config.EditConfig()
-	case "alert add":
-		addAlertMain(rc, client)
-	case "alertd":
-		alertMain(context.Background(), rc)
-	case "version":
-		println(version)
-	case "upgrade":
-		if err := upgradeVersion(); err != nil {
-			fmt.Println("Upgrade failed.")
-		} else {
-			fmt.Println("Upgrade has been completed successfully.")
-		}
-	}
 }

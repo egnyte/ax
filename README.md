@@ -68,15 +68,11 @@ To "go install" ax (this will put the resulting binary in `$GOPATH/bin` so put t
     make
 
 ## Setup
-Once you have `ax` installed, the first thing you'll want to do is setup bash or zsh command completion (I'm not kidding).
+Once you have `ax` installed, the first thing you'll want to do is setup bash command completion (I'm not kidding).
 
 For bash, add to `~/.bash_profile`:
 
     eval "$(ax --completion-script-bash)"
-
-For zsh, add to `~/.zshrc`:
-
-    eval "$(ax --completion-script-zsh)"
 
 After this, you can auto complete commands, flags, environments, docker container names and even attribute names by hittig TAB. Use it, love it, never go back.
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/egnyte/ax/pkg/backend/docker"
 	"github.com/egnyte/ax/pkg/complete"
 	"github.com/egnyte/ax/pkg/config"
 	"github.com/spf13/cobra"
@@ -14,12 +15,72 @@ var (
 	}
 )
 
+const (
+	bashCompletion = `
+__ax_parse_env_flag()
+{
+	local envflag
+	envflag=$(echo "${words[@]}" | sed -E 's/.*(--env[= ]+|-e +)([A-Za-z_-]+).*/\2/')
+	if [[ $envflag = *" "* ]]; then
+	    __ax_debug "No env found"
+	    envflag=""
+    else
+		__ax_debug "Env: ${envflag}"
+	fi
+	echo ${envflag}
+}
+
+__ax_get_envs()
+{
+	local output
+	if output=$(ax complete env 2>/dev/null); then
+		COMPREPLY=( $(compgen -W "${output[*]}" -- "$cur") )
+    fi
+}
+
+__ax_get_containers()
+{
+	local output
+	if output=$(ax complete docker 2>/dev/null); then
+		COMPREPLY=( $(compgen -W "${output[*]}" -- "$cur") )
+    fi
+}
+
+__ax_get_attrs_where()
+{
+	__ax_get_attrs_with_suffix "="
+}
+
+__ax_get_attrs_where2()
+{
+	__ax_get_attrs_with_suffix ":"
+}
+
+__ax_get_attrs_select()
+{
+	__ax_get_attrs_with_suffix ""
+}
+
+
+__ax_get_attrs_with_suffix()
+{
+	local output envflag suffix
+	suffix=$1
+	envflag=$(__ax_parse_env_flag)
+	if output=$(ax complete attrs ${envflag} --suffix=${suffix} 2>/dev/null); then
+		__ax_debug "Completion results: ${output[*]}"
+		COMPREPLY=( $(compgen -W "${output[*]}" -- "$cur") )
+    fi
+}
+`
+)
+
 func init() {
 	completionCommand.AddCommand(&cobra.Command{
 		Use: "env",
 		Run: func(cmd *cobra.Command, args []string) {
-			config := config.LoadConfig()
-			for envName := range config.Environments {
+			cfg := config.LoadConfig()
+			for envName := range cfg.Environments {
 				fmt.Println(envName)
 			}
 		},
@@ -41,4 +102,13 @@ func init() {
 	}
 	attrsCommand.Flags().StringVar(&suffixOperatorFlag, "suffix", "", "Suffix to use")
 	completionCommand.AddCommand(attrsCommand)
+
+	completionCommand.AddCommand(&cobra.Command{
+		Use: "docker",
+		Run: func(cmd *cobra.Command, args []string) {
+			for _, containerName := range docker.GetRunningContainers("") {
+				fmt.Println(containerName)
+			}
+		},
+	})
 }
