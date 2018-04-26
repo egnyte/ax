@@ -36,6 +36,8 @@ func TestFilterGenerator(t *testing.T) {
 		t.Fatal(output)
 	}
 
+
+
 	output = queryToFilterPattern(common.Query{
 		EqualityFilters: []common.EqualityFilter{
 			{

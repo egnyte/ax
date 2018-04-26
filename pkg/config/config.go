@@ -15,11 +15,11 @@ import (
 
 	"github.com/imdario/mergo"
 	"github.com/zefhemel/kingpin"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/egnyte/ax/pkg/backend/common"
-	"github.com/egnyte/ax/pkg/backend/docker"
 	"github.com/olekukonko/tablewriter"
+	"github.com/spf13/cobra"
 )
 
 var dataDir string
@@ -50,8 +50,9 @@ type RuntimeConfig struct {
 }
 
 var (
-	activeEnv      = kingpin.Flag("env", "Environment to connect to").Short('e').HintAction(envHintAction).String()
-	dockerFlag     = kingpin.Flag("docker", "Query docker container logs").HintAction(docker.DockerHintAction).String()
+	//activeEnv      = kingpin.Flag("env", "Environment to connect to").Short('e').HintAction(envHintAction).String()
+	// dockerFlag     = kingpin.Flag("docker", "Query docker container logs").HintAction(docker.DockerHintAction).String()
+	listPlainFlag  bool
 	envCommand     = kingpin.Command("env", "Environment management commands")
 	envInitCommand = envCommand.Command("add", "Add an environment")
 	envEditCommand = envCommand.Command("edit", "Edit your environment configuration file in a text editor")
@@ -63,6 +64,40 @@ func NewConfig() Config {
 		Environments: make(map[string]EnvMap),
 		Alerts:       make([]AlertConfig, 0),
 	}
+}
+
+func EnvCommand() *cobra.Command {
+
+	listCommand := &cobra.Command{
+		Use: "list",
+		Run: func(cmd *cobra.Command, args []string) {
+			ListEnvs()
+		},
+	}
+
+	addCommand := &cobra.Command{
+		Use: "add",
+		Run: func(cmd *cobra.Command, args []string) {
+			AddEnv()
+		},
+	}
+	editCommand := &cobra.Command{
+		Use: "edit",
+		Run: func(cmd *cobra.Command, args []string) {
+			EditConfig()
+		},
+	}
+
+	envCmd := &cobra.Command{
+		Use:   "env",
+		Short: "Environment management",
+		Run: func(cmd *cobra.Command, args []string) {
+			listCommand.Run(cmd, args)
+		},
+	}
+	envCmd.AddCommand(listCommand, addCommand, editCommand)
+
+	return envCmd
 }
 
 func LoadConfig() Config {
@@ -92,7 +127,7 @@ func configPathName() string {
 	return fmt.Sprintf("%s/ax.yaml", dataDir)
 }
 
-func BuildConfig() RuntimeConfig {
+func BuildConfig(activeEnv string, dockerFlag string) RuntimeConfig {
 	config := LoadConfig()
 	rc := RuntimeConfig{
 		DataDir: dataDir,
@@ -107,18 +142,18 @@ func BuildConfig() RuntimeConfig {
 			os.Exit(1)
 		}
 	}
-	if *activeEnv != "" {
-		rc.Env, ok = config.Environments[*activeEnv]
-		rc.ActiveEnv = *activeEnv
+	if activeEnv != "" {
+		rc.Env, ok = config.Environments[activeEnv]
+		rc.ActiveEnv = activeEnv
 		if !ok {
-			fmt.Println("Undefined active environment:", *activeEnv)
+			fmt.Println("Undefined active environment:", activeEnv)
 			os.Exit(1)
 		}
 	}
-	if *dockerFlag != "" {
-		rc.ActiveEnv = fmt.Sprintf("docker.%s", *dockerFlag)
+	if dockerFlag != "" {
+		rc.ActiveEnv = fmt.Sprintf("docker.%s", dockerFlag)
 		rc.Env["backend"] = "docker"
-		rc.Env["pattern"] = *dockerFlag
+
 	}
 	return rc
 }

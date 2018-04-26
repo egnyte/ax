@@ -13,61 +13,70 @@ import (
 	"github.com/egnyte/ax/pkg/backend/common"
 	"github.com/egnyte/ax/pkg/complete"
 	"github.com/egnyte/ax/pkg/config"
-	"github.com/zefhemel/kingpin"
-	yaml "gopkg.in/yaml.v2"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"gopkg.in/yaml.v2"
 )
 
-func addQueryFlags(cmd *kingpin.CmdClause) *common.QuerySelectors {
+func addCompletionFunc(flagSet *pflag.FlagSet, flagName, bashCompletionFunction string) {
+	flagSet.Lookup(flagName).Annotations = map[string][]string{cobra.BashCompCustom: {bashCompletionFunction}}
+}
+
+func addQueryFlags(cmd *cobra.Command) *common.QuerySelectors {
 	flags := &common.QuerySelectors{}
-	cmd.Flag("before", "Results from before").StringVar(&flags.Before)
-	cmd.Flag("after", "Results from after").StringVar(&flags.After)
-	cmd.Flag("select", "Fields to select").Short('s').HintAction(selectHintAction).StringsVar(&flags.Select)
-	cmd.Flag("where", "Add a filter").Short('w').HintAction(whereHintAction).StringsVar(&flags.Where)
-	cmd.Flag("where-one-of", "Add a membership filter (FIELD_NAME:FIELD_VALUE)").HintAction(oneOfHintAction).StringsVar(&flags.OneOf)
-	cmd.Flag("where-not-one-of", "Add an inverse membership filter (FIELD_NAME:FIELD_VALUE)").HintAction(oneOfHintAction).StringsVar(&flags.NotOneOf)
-	cmd.Flag("where-exists", "Add a field existence filter").HintAction(existenceHintAction).StringsVar(&flags.Exists)
-	cmd.Flag("where-not-exists", "Add an inverse field existence filter").HintAction(existenceHintAction).StringsVar(&flags.NotExists)
-	cmd.Flag("uniq", "Unique log messages only").Default("false").BoolVar(&flags.Unique)
-	cmd.Arg("query", "Query string").Default("").StringsVar(&flags.QueryString)
+	cFlags := cmd.Flags()
+	cFlags.StringVar(&flags.Before, "before", "", "Results from before")
+	cFlags.StringVar(&flags.After, "after", "", "Results from after")
+	cFlags.StringArrayVarP(&flags.Select, "select", "s", []string{}, "Select specific attributes only")
+	addCompletionFunc(cFlags, "select", "__ax_get_attrs_select")
+	cFlags.StringArrayVarP(&flags.Where, "where", "w", []string{}, "Add a filter")
+	addCompletionFunc(cFlags, "where", "__ax_get_attrs_where")
+	cFlags.StringArrayVar(&flags.OneOf, "where-one-of", []string{}, "Add a membership filter (FIELD_NAME:FIELD_VALUE)")
+	cFlags.StringArrayVar(&flags.NotOneOf, "where-not-one-of", []string{}, "Add a negative membership filter (FIELD_NAME:FIELD_VALUE)")
+	addCompletionFunc(cFlags, "where-one-of", "__ax_get_attrs_where2")
+	addCompletionFunc(cFlags, "where-not-one-of", "__ax_get_attrs_where2")
+	cFlags.StringArrayVar(&flags.Exists, "where-exists", []string{}, "Add a field existence filter")
+	addCompletionFunc(cFlags, "where-exists", "__ax_get_attrs_select")
+	cFlags.StringArrayVar(&flags.NotExists, "where-not-exists", []string{}, "Add a negative field existence filter")
+	addCompletionFunc(cFlags, "where-not-exists", "__ax_get_attrs_select")
+	cFlags.BoolVar(&flags.Unique, "uniq", false, "Unique log messages only")
 	return flags
 }
 
 var (
-	queryFlags            = addQueryFlags(queryCommand)
+	queryFlags            = addQueryFlags(rootCmd)
 	queryFlagMaxResults   int
 	queryFlagOutputFormat string
 	queryFlagFollow       bool
 )
 
 func init() {
-	queryCommand.Flag("results", "Maximum number of results").Short('n').Default("50").IntVar(&queryFlagMaxResults)
-	queryCommand.Flag("output", "Output format: text|json|yaml").Short('o').Default("text").EnumVar(&queryFlagOutputFormat, "text", "yaml", "json", "pretty-json")
-	queryCommand.Flag("follow", "Follow log in quasi-realtime, similar to tail -f").Short('f').Default("false").BoolVar(&queryFlagFollow)
-}
-
-func commonHintAction(suffix string) []string {
-	rc := config.BuildConfig()
-	resultList := make([]string, 0, 20)
-	for attrName := range complete.GetCompletions(rc) {
-		resultList = append(resultList, fmt.Sprintf("%s%s", attrName, suffix))
+	// Hack in the main run command
+	rootCmd.Run = func(cmd *cobra.Command, args []string) {
+		rc := config.BuildConfig(defaultEnvFlag, dockerFlag)
+		client := determineClient(rc.Env)
+		if bashScriptFlag {
+			fmt.Println(`# To load: eval "$(ax bash-completion)"`)
+			rootCmd.GenBashCompletion(os.Stdout)
+			return
+		}
+		ctx := sigtermContextHandler(context.Background())
+		if client == nil {
+			if len(rc.Config.Environments) == 0 {
+				// Assuming first time use
+				fmt.Println("Welcome to ax! It looks like this is the first time running, so let's start with creating a new environment.")
+				config.AddEnv()
+				return
+			}
+			fmt.Println("No default environment set, please use the --env flag to set one. Exiting.")
+			return
+		}
+		queryMain(ctx, rc, client, args)
 	}
-	return resultList
-}
-
-func whereHintAction() []string {
-	return commonHintAction("=")
-}
-
-func oneOfHintAction() []string {
-	return commonHintAction(":")
-}
-
-func existenceHintAction() []string {
-	return commonHintAction("")
-}
-
-func selectHintAction() []string {
-	return commonHintAction("")
+	flags := rootCmd.Flags()
+	flags.BoolVarP(&queryFlagFollow, "follow", "f", false, "Follow logs in quasi real-time, similar to tail -f")
+	flags.IntVarP(&queryFlagMaxResults, "results", "n", 50, "Maximum number of results")
+	flags.StringVarP(&queryFlagOutputFormat, "output", "o", "text", "Output format: text|json|yaml")
 }
 
 var equalityFilterRegex = regexp.MustCompile(`([^!=<>]+)\s*(=|!=)\s*(.*)`)
@@ -185,7 +194,7 @@ func querySelectorsToQuery(flags *common.QuerySelectors) common.Query {
 	}
 }
 
-func queryMain(ctx context.Context, rc config.RuntimeConfig, client common.Client) {
+func queryMain(ctx context.Context, rc config.RuntimeConfig, client common.Client, queryPhrase []string) {
 	query := querySelectorsToQuery(queryFlags)
 	if !client.ImplementsAdvancedFilters() && (len(query.ExistenceFilters) > 0 || len(query.MembershipFilters) > 0) {
 		fmt.Println("This backend does not support advanded filters (yet!)")
@@ -194,6 +203,7 @@ func queryMain(ctx context.Context, rc config.RuntimeConfig, client common.Clien
 
 	query.MaxResults = queryFlagMaxResults
 	query.Follow = queryFlagFollow
+	query.QueryString = strings.Join(queryPhrase, " ")
 	seenBeforeHash := make(map[string]bool)
 	for message := range complete.GatherCompletionInfo(rc, client.Query(ctx, query)) {
 		if query.Unique {

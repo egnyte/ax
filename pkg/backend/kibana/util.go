@@ -17,7 +17,6 @@ func createMultiSearch(objs ...interface{}) (io.Reader, error) {
 			return nil, err
 		}
 	}
-	//fmt.Println(buf.String())
 	return &buf, nil
 }
 

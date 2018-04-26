@@ -9,15 +9,20 @@ import (
 	"github.com/egnyte/ax/pkg/alert/slack"
 	"github.com/egnyte/ax/pkg/backend/common"
 	"github.com/egnyte/ax/pkg/config"
+	"github.com/spf13/cobra"
 )
 
 var (
 	alertFlags    = addQueryFlags(addAlertCommand)
+	addAlertCommand = &cobra.Command {
+		Use: "add",
+	}
 	alertFlagName string
 )
 
 func init() {
-	addAlertCommand.Flag("name", "Name for alert").Required().StringVar(&alertFlagName)
+	addAlertCommand.LocalFlags().StringVar(&alertFlagName, "name", "", "Name for alert")
+	addAlertCommand.MarkFlagRequired("name")
 }
 
 func addAlertMain(rc config.RuntimeConfig, client common.Client) {
