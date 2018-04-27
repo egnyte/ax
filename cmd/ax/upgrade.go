@@ -17,11 +17,23 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/kardianos/osext"
+	"github.com/spf13/cobra"
 )
 
 var (
 	gitOrganisationName = "egnyte"
 	gitRepositoryName   = "ax"
+	upgradeCommand      = &cobra.Command{
+		Use:   "upgrade",
+		Short: "Check if an upgrade of Ax is available and install it",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := upgradeVersion(); err != nil {
+				fmt.Println("Upgrade failed.")
+			} else {
+				fmt.Println("Upgrade has been completed successfully.")
+			}
+		},
+	}
 )
 
 func getLatestReleaseData() *github.RepositoryRelease {

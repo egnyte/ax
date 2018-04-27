@@ -9,18 +9,40 @@ import (
 	"github.com/egnyte/ax/pkg/alert/slack"
 	"github.com/egnyte/ax/pkg/backend/common"
 	"github.com/egnyte/ax/pkg/config"
+	"github.com/spf13/cobra"
 )
 
 var (
-	alertFlags    = addQueryFlags(addAlertCommand)
+	alertFlags    *common.QuerySelectors
 	alertFlagName string
+	alertCommand  = &cobra.Command{
+		Use:   "alert",
+		Short: "Alert management (experimental)",
+	}
+	alertDCommand = &cobra.Command{
+		Use:   "alertd",
+		Short: "Alert daemon (experimental)",
+		Run: func(cmd *cobra.Command, args []string) {
+			alertMain(context.Background(), config.BuildConfig("", ""))
+		},
+	}
 )
 
 func init() {
-	addAlertCommand.Flag("name", "Name for alert").Required().StringVar(&alertFlagName)
+	addAlertCommand := &cobra.Command{
+		Use: "add",
+		Run: func(cmd *cobra.Command, args []string) {
+			rc := config.BuildConfig(defaultEnvFlag, dockerFlag)
+			addAlertMain(rc)
+		},
+	}
+	alertFlags = addQueryFlags(addAlertCommand)
+	addAlertCommand.Flags().StringVar(&alertFlagName, "name", "", "Name for alert")
+	addAlertCommand.MarkFlagRequired("name")
+	alertCommand.AddCommand(addAlertCommand)
 }
 
-func addAlertMain(rc config.RuntimeConfig, client common.Client) {
+func addAlertMain(rc config.RuntimeConfig) {
 	alertConfig := config.AlertConfig{
 		Env:      rc.ActiveEnv,
 		Name:     alertFlagName,
@@ -62,6 +84,7 @@ func watchAlerts(ctx context.Context, rc config.RuntimeConfig, alertConfig confi
 }
 
 func alertMain(ctx context.Context, rc config.RuntimeConfig) {
+	fmt.Println("Starting alert watchers...")
 	for _, alert := range rc.Config.Alerts {
 		go watchAlerts(ctx, rc, alert)
 	}

@@ -8,8 +8,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/zefhemel/kingpin"
-
 	"github.com/egnyte/ax/pkg/backend/cloudwatch"
 	"github.com/egnyte/ax/pkg/backend/common"
 	"github.com/egnyte/ax/pkg/backend/docker"
@@ -18,17 +16,28 @@ import (
 	"github.com/egnyte/ax/pkg/backend/stream"
 	"github.com/egnyte/ax/pkg/backend/subprocess"
 	"github.com/egnyte/ax/pkg/config"
+
+	"github.com/spf13/cobra"
 )
 
 var (
-	queryCommand    = kingpin.Command("query", "Query logs").Default()
-	alertCommand    = kingpin.Command("alert", "Be alerted when logs match a query")
-	alertDCommand   = kingpin.Command("alertd", "Be alerted when logs match a query")
-	versionCommand  = kingpin.Command("version", "Show the ax version")
-	upgrade         = kingpin.Command("upgrade", "Upgrade Ax if a new version is available")
-	addAlertCommand = alertCommand.Command("add", "Add new alert")
-	version         = "dev"
-	versionFlag     = kingpin.Version(version)
+	version        = "dev"
+	defaultEnvFlag string
+	dockerFlag     string
+	bashScriptFlag bool
+	rootCmd        = &cobra.Command{
+		Use:   "ax [SEARCH PHRASE]",
+		Short: "Ax is a structured log query tool",
+		BashCompletionFunction: bashCompletion,
+		Args: cobra.ArbitraryArgs,
+	}
+	versionCommand = &cobra.Command{
+		Use:   "version",
+		Short: "Check the version of Ax you are running",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println(version)
+		},
+	}
 )
 
 func determineClient(em config.EnvMap) common.Client {
@@ -72,42 +81,18 @@ func sigtermContextHandler(ctx context.Context) context.Context {
 }
 
 func main() {
-	cmd := kingpin.Parse()
+	// Global flags
+	persistentFlags := rootCmd.PersistentFlags()
+	persistentFlags.StringVar(&defaultEnvFlag, "env", "", "Environment to use")
+	persistentFlags.Lookup("env").Annotations = map[string][]string{cobra.BashCompCustom: {"__ax_get_envs"}}
+	persistentFlags.StringVar(&dockerFlag, "docker", "", "Query docker containers with a certain prefix, use * to query all")
+	addCompletionFunc(persistentFlags, "docker", "__ax_get_containers")
 
-	rc := config.BuildConfig()
-	client := determineClient(rc.Env)
+	// Bash script generation
+	// TODO: Add back zsh support
+	rootCmd.Flags().BoolVar(&bashScriptFlag, "completion-script-bash", false, "Generate bash script")
 
-	switch cmd {
-	case "query":
-		ctx := sigtermContextHandler(context.Background())
-		if client == nil {
-			if len(rc.Config.Environments) == 0 {
-				// Assuming first time use
-				fmt.Println("Welcome to ax! It looks like this is the first time running, so let's start with creating a new environment.")
-				config.AddEnv()
-				return
-			}
-			fmt.Println("No default environment set, please use the --env flag to set one. Exiting.")
-			return
-		}
-		queryMain(ctx, rc, client)
-	case "env add":
-		config.AddEnv()
-	case "env list":
-		config.ListEnvs()
-	case "env edit":
-		config.EditConfig()
-	case "alert add":
-		addAlertMain(rc, client)
-	case "alertd":
-		alertMain(context.Background(), rc)
-	case "version":
-		println(version)
-	case "upgrade":
-		if err := upgradeVersion(); err != nil {
-			fmt.Println("Upgrade failed.")
-		} else {
-			fmt.Println("Upgrade has been completed successfully.")
-		}
-	}
+	// Add all commands
+	rootCmd.AddCommand(config.EnvCommand(), completionCommand, upgradeCommand, alertCommand, alertDCommand, versionCommand)
+	rootCmd.Execute()
 }

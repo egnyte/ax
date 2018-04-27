@@ -1,3 +1,4 @@
 env.sh
 dist/
 vendor/
+.idea/
