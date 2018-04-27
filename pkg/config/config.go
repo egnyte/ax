@@ -14,7 +14,6 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/imdario/mergo"
-	"github.com/zefhemel/kingpin"
 	"gopkg.in/yaml.v2"
 
 	"github.com/egnyte/ax/pkg/backend/common"
@@ -52,11 +51,7 @@ type RuntimeConfig struct {
 var (
 	//activeEnv      = kingpin.Flag("env", "Environment to connect to").Short('e').HintAction(envHintAction).String()
 	// dockerFlag     = kingpin.Flag("docker", "Query docker container logs").HintAction(docker.DockerHintAction).String()
-	listPlainFlag  bool
-	envCommand     = kingpin.Command("env", "Environment management commands")
-	envInitCommand = envCommand.Command("add", "Add an environment")
-	envEditCommand = envCommand.Command("edit", "Edit your environment configuration file in a text editor")
-	envListCommand = envCommand.Command("list", "List all environments").Default()
+	listPlainFlag bool
 )
 
 func NewConfig() Config {
@@ -67,7 +62,6 @@ func NewConfig() Config {
 }
 
 func EnvCommand() *cobra.Command {
-
 	listCommand := &cobra.Command{
 		Use: "list",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -81,6 +75,7 @@ func EnvCommand() *cobra.Command {
 			AddEnv()
 		},
 	}
+
 	editCommand := &cobra.Command{
 		Use: "edit",
 		Run: func(cmd *cobra.Command, args []string) {
