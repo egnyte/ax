@@ -1,6 +1,7 @@
 builds:
   - binary: ax
     main: ./cmd/ax
+    ldflags: -s -w -X main.version={{.Tag}} -X main.commit={{.Commit}} -X main.date={{.Date}}
     goos:
       - darwin
       - linux
@@ -9,4 +10,3 @@ builds:
       - 386
 archive:
   name_template: "{{ .ProjectName }}_{{ .Tag }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-  
