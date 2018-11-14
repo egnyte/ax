@@ -151,17 +151,16 @@ func buildExistenceFilters(exists []string, notExists []string) []common.Existen
 	return filters
 }
 
-func stringToTime(raw, name string) *time.Time {
-	if raw != "" {
-		parsed, err := dateparse.ParseLocal(raw)
-		if err != nil {
-			fmt.Printf("Could not parse %s date: %s\n", name, raw)
-			os.Exit(1)
-		}
-		fmt.Printf("Parsed --%s  as %s", name, parsed.Format(common.TimeFormat))
-		return &parsed
+func stringToTime(raw string) (*time.Time, error) {
+	if raw == "" {
+		return nil, nil
 	}
-	return nil
+	parsed, err := dateparse.ParseLocal(raw)
+
+	if err != nil {
+		return nil, fmt.Errorf("Could not parse date: %s\n", raw)
+	}
+	return &parsed, nil
 }
 
 // Do this in order to mock it in test
@@ -201,14 +200,30 @@ func lastToTimeInterval(raw string) (*time.Time, *time.Time, error) {
 
 func querySelectorsToQuery(flags *common.QuerySelectors) common.Query {
 	var before, after *time.Time
+	var err error
+
 	last := flags.Last
 
 	if last != "" {
-		before, after, _ = lastToTimeInterval(last)
+		before, after, err = lastToTimeInterval(last)
+		if err != nil {
+			fmt.Printf("%v", err)
+			os.Exit(1)
+		}
 	} else {
-		before = stringToTime(flags.Before, "before")
-		after = stringToTime(flags.After, "after")
+		before, err = stringToTime(flags.Before)
+		if err != nil {
+			fmt.Printf("%v", err)
+			os.Exit(1)
+		}
+		after, err = stringToTime(flags.After)
+		if err != nil {
+			fmt.Printf("%v", err)
+			os.Exit(1)
+		}
 	}
+
+	fmt.Printf("Logs before: %s, after: %s\n", before.Format(common.TimeFormat), after.Format(common.TimeFormat))
 
 	return common.Query{
 		QueryString:       strings.Join(flags.QueryString, " "),
