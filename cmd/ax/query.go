@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 
 func addQueryFlags(cmd *kingpin.CmdClause) *common.QuerySelectors {
 	flags := &common.QuerySelectors{}
+	cmd.Flag("last", "Results from last x minutes, hours, days, months, years. If used after and before are ignored").StringVar(&flags.Last)
 	cmd.Flag("before", "Results from before").StringVar(&flags.Before)
 	cmd.Flag("after", "Results from after").StringVar(&flags.After)
 	cmd.Flag("select", "Fields to select").Short('s').HintAction(selectHintAction).StringsVar(&flags.Select)
@@ -149,28 +151,63 @@ func buildExistenceFilters(exists []string, notExists []string) []common.Existen
 	return filters
 }
 
-func querySelectorsToQuery(flags *common.QuerySelectors) common.Query {
-	var before *time.Time
-	var after *time.Time
-	if flags.After != "" {
-		var err error
-		afterTime, err := dateparse.ParseLocal(flags.After)
+func stringToTime(raw, name string) *time.Time {
+	if raw != "" {
+		parsed, err := dateparse.ParseLocal(raw)
 		if err != nil {
-			fmt.Println("Could parse after date:", flags.After)
+			fmt.Printf("Could not parse %s date: %s\n", name, raw)
 			os.Exit(1)
 		}
-		fmt.Fprintf(os.Stderr, "Parsed --after as %s", afterTime.Format(common.TimeFormat))
-		after = &afterTime
+		fmt.Printf("Parsed --%s  as %s", name, parsed.Format(common.TimeFormat))
+		return &parsed
 	}
-	if flags.Before != "" {
-		var err error
-		beforeTime, err := dateparse.ParseLocal(flags.Before)
-		if err != nil {
-			fmt.Println("Could parse before date:", flags.Before)
-			os.Exit(1)
-		}
-		fmt.Fprintf(os.Stderr, "Parsed --before as %s", beforeTime.Format(common.TimeFormat))
-		before = &beforeTime
+	return nil
+}
+
+// Do this in order to mock it in test
+var timeNow = time.Now
+
+func lastToTimeInterval(raw string) (*time.Time, *time.Time, error) {
+	splitted := strings.Split(raw, " ")
+	if len(splitted) != 2 {
+		return nil, nil, fmt.Errorf("last filter should contain amount and unit")
+	}
+
+	amountStr, unit := splitted[0], splitted[1]
+	amount, err := strconv.Atoi(amountStr)
+	if err != nil {
+		return nil, nil, fmt.Errorf("amount has to be numeric")
+	}
+	before := timeNow()
+
+	var after time.Time
+	switch unit {
+	case "minutes", "minute", "min":
+		after = before.Add(-time.Minute * time.Duration(amount))
+	case "hours", "hour", "h":
+		after = before.Add(-time.Hour * time.Duration(amount))
+	case "days", "day", "d":
+		after = before.AddDate(0, 0, -amount)
+	case "months", "month", "m":
+		after = before.AddDate(0, -amount, 0)
+	case "years", "year", "y":
+		after = before.AddDate(-amount, 0, 0)
+	default:
+		return nil, nil, fmt.Errorf("unknown unit")
+	}
+
+	return &before, &after, nil
+}
+
+func querySelectorsToQuery(flags *common.QuerySelectors) common.Query {
+	var before, after *time.Time
+	last := flags.Last
+
+	if last != "" {
+		before, after, _ = lastToTimeInterval(last)
+	} else {
+		before = stringToTime(flags.Before, "before")
+		after = stringToTime(flags.After, "after")
 	}
 
 	return common.Query{

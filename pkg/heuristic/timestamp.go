@@ -57,6 +57,17 @@ var formatsToTryRx []*regexp.Regexp = []*regexp.Regexp{
 	regexp.MustCompile(`\d+-\d+-\d+ \d+:\d+:\d+(,\d+)?`),
 }
 
+func FindTimestampFunc(exampleMessage common.LogMessage) LogTimestampParser {
+	for k, v := range exampleMessage.Attributes {
+		if fn := guessTimestampParseFunc(v); fn != nil {
+			return func(lm common.LogMessage) *time.Time {
+				return fn(lm.Attributes[k])
+			}
+		}
+	}
+	return findTimestampInMessage(exampleMessage)
+}
+
 func epochMsToTime(i int64) *time.Time {
 	now := time.Now()
 	ts := time.Unix(i/1000, 0)
@@ -75,7 +86,7 @@ func epochToTime(i int64) *time.Time {
 	return &ts
 }
 
-func GuessTimestampParseFunc(exampleV interface{}) TimestampParser {
+func guessTimestampParseFunc(exampleV interface{}) TimestampParser {
 	switch exampleVal := exampleV.(type) {
 	case float64:
 		t := epochToTime(int64(exampleVal))
@@ -124,14 +135,6 @@ func GuessTimestampParseFunc(exampleV interface{}) TimestampParser {
 		}
 	}
 	return nil
-}
-
-func ParseTimestamp(v interface{}) (*time.Time, error) {
-	fn := GuessTimestampParseFunc(v)
-	if fn == nil {
-		return nil, ErrorCouldNotParse
-	}
-	return fn(v), nil
 }
 
 // Currently unused
@@ -185,24 +188,3 @@ func findTimestampInMessage(exampleMessage common.LogMessage) LogTimestampParser
 	}
 	return nil
 }
-
-func FindTimestampFunc(exampleMessage common.LogMessage) LogTimestampParser {
-	for k, v := range exampleMessage.Attributes {
-		if fn := GuessTimestampParseFunc(v); fn != nil {
-			return func(lm common.LogMessage) *time.Time {
-				return fn(lm.Attributes[k])
-			}
-		}
-	}
-	return findTimestampInMessage(exampleMessage)
-}
-
-//func GetTimestamp(lm common.LogMessage) (*time.Time, error) {
-//	if fn := FindTimestampFunc(lm); fn != nil {
-//		return fn(lm), nil
-//	}
-//	if fn := findTimestampInMessage(lm); fn != nil {
-//		return fn(lm), nil
-//	}
-//	return nil, errors.New("Not found")
-//}

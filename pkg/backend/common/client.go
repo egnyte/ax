@@ -53,6 +53,7 @@ type Query struct {
 }
 
 type QuerySelectors struct {
+	Last        string   `yaml:"last,omitempty"`
 	Before      string   `yaml:"before,omitempty"`
 	After       string   `yaml:"after,omitempty"`
 	Select      []string `yaml:"select,omitempty"`
