@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 
 func addQueryFlags(cmd *kingpin.CmdClause) *common.QuerySelectors {
 	flags := &common.QuerySelectors{}
+	cmd.Flag("last", "Results from last x minutes, hours, days, months, years. If used after and before are ignored").StringVar(&flags.Last)
 	cmd.Flag("before", "Results from before").StringVar(&flags.Before)
 	cmd.Flag("after", "Results from after").StringVar(&flags.After)
 	cmd.Flag("select", "Fields to select").Short('s').HintAction(selectHintAction).StringsVar(&flags.Select)
@@ -149,29 +151,79 @@ func buildExistenceFilters(exists []string, notExists []string) []common.Existen
 	return filters
 }
 
+func stringToTime(raw string) (*time.Time, error) {
+	if raw == "" {
+		return nil, nil
+	}
+	parsed, err := dateparse.ParseLocal(raw)
+
+	if err != nil {
+		return nil, fmt.Errorf("Could not parse date: %s\n", raw)
+	}
+	return &parsed, nil
+}
+
+// Do this in order to mock it in test
+var timeNow = time.Now
+
+func lastToTimeInterval(raw string) (*time.Time, *time.Time, error) {
+	splitted := strings.Split(raw, " ")
+	if len(splitted) != 2 {
+		return nil, nil, fmt.Errorf("last filter should contain amount and unit")
+	}
+
+	amountStr, unit := splitted[0], splitted[1]
+	amount, err := strconv.Atoi(amountStr)
+	if err != nil {
+		return nil, nil, fmt.Errorf("amount has to be numeric")
+	}
+	before := timeNow()
+
+	var after time.Time
+	switch unit {
+	case "minutes", "minute", "min":
+		after = before.Add(-time.Minute * time.Duration(amount))
+	case "hours", "hour", "h":
+		after = before.Add(-time.Hour * time.Duration(amount))
+	case "days", "day", "d":
+		after = before.AddDate(0, 0, -amount)
+	case "months", "month", "m":
+		after = before.AddDate(0, -amount, 0)
+	case "years", "year", "y":
+		after = before.AddDate(-amount, 0, 0)
+	default:
+		return nil, nil, fmt.Errorf("unknown unit")
+	}
+
+	return &before, &after, nil
+}
+
 func querySelectorsToQuery(flags *common.QuerySelectors) common.Query {
-	var before *time.Time
-	var after *time.Time
-	if flags.After != "" {
-		var err error
-		afterTime, err := dateparse.ParseLocal(flags.After)
+	var before, after *time.Time
+	var err error
+
+	last := flags.Last
+
+	if last != "" {
+		before, after, err = lastToTimeInterval(last)
 		if err != nil {
-			fmt.Println("Could parse after date:", flags.After)
+			fmt.Printf("%v", err)
 			os.Exit(1)
 		}
-		fmt.Fprintf(os.Stderr, "Parsed --after as %s", afterTime.Format(common.TimeFormat))
-		after = &afterTime
-	}
-	if flags.Before != "" {
-		var err error
-		beforeTime, err := dateparse.ParseLocal(flags.Before)
+	} else {
+		before, err = stringToTime(flags.Before)
 		if err != nil {
-			fmt.Println("Could parse before date:", flags.Before)
+			fmt.Printf("%v", err)
 			os.Exit(1)
 		}
-		fmt.Fprintf(os.Stderr, "Parsed --before as %s", beforeTime.Format(common.TimeFormat))
-		before = &beforeTime
+		after, err = stringToTime(flags.After)
+		if err != nil {
+			fmt.Printf("%v", err)
+			os.Exit(1)
+		}
 	}
+
+	fmt.Printf("Logs before: %s, after: %s\n", before.Format(common.TimeFormat), after.Format(common.TimeFormat))
 
 	return common.Query{
 		QueryString:       strings.Join(flags.QueryString, " "),
