@@ -223,7 +223,14 @@ func querySelectorsToQuery(flags *common.QuerySelectors) common.Query {
 		}
 	}
 
-	fmt.Printf("Logs before: %s, after: %s\n", before.Format(common.TimeFormat), after.Format(common.TimeFormat))
+	// before and after could be nil if not provided, but if they were provided
+	// or `last` flag was provided print range of dates from which logs will be showed.
+	if after != nil {
+		fmt.Printf("After: %s\n", after.Format(common.TimeFormat))
+	}
+	if before != nil {
+		fmt.Printf("Before: %s\n", before.Format(common.TimeFormat))
+	}
 
 	return common.Query{
 		QueryString:       strings.Join(flags.QueryString, " "),
